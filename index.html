@@ -739,26 +739,19 @@ render();
 
 // ===== LOADED DEAL (replace this block each new deal) =====
 window.loadDeal({
-  address:"1807 Austin St, Montgomery, AL 36110", zip:"36110",
-  neighborhood:"Highland Gardens", listing_status:"For Sale (investment package)", report_date:"June 27, 2026",
-  beds:4, baths:2, sqft:1236, year_built:"1957", style:"Brick — Single-Family",
-  lot_size:"0.5 ac", asking_price:"$80,000", dom:"For sale", list_price:80000,
-  purchase_override:80000, rehab_override:0,
-  county_pulled:false, condition_adj_pct:0,
-  annual_tax:355.32, // Montgomery County PAYMENT INFO — tax yr 2025, paid 1/2/2026 (LERETA)
-  sources_line:"Subject & comps pulled from Homes.com on 6/29/26 (new single-source pipeline; Zillow/Redfin retired). Comps = the Similar Homes set at the bottom of the listing — first 3 from page 1, first 2 from page 2 — pending courthouse deed-verification + tax pull. Subject tax $355.32/yr is county-verified.",
-  notes:[
-    "Subject: 4bd/2ba, 1,236 sqft brick, built 1957, Highland Gardens / North Montgomery (36110) — Section-8-occupied investment-package listing; assumed standard livable, rehab $0. (Homes.com)",
-    "Comps sourced from Homes.com 'Similar Homes': 3 from page 1 + 2 from page 1→2. These are ACTIVE/asking prices, not recorded sales — to be deed-verified at the Montgomery County courthouse and corrected to the recorded sale where they differ.",
-    "Comps 4 & 5 (page-2 picks) need visual confirmation — Homes.com froze before the page-2 layout could be screenshotted; loaded as best-guess and editable in the sidebar.",
-    "ARV = avg comp $/sqft × subject 1,236 sqft (strong/note comps only)."
-  ],
+  address:"806 Leicester Dr, Montgomery, AL 36116", zip:"36116",
+  neighborhood:"", listing_status:"For Sale (investment package)", report_date:"June 29, 2026",
+  beds:4, baths:2.5, sqft:2115, year_built:null, style:"Single-Family",
+  purchase_override:70000, rehab_override:30000,
+  county_pulled:true, condition_adj_pct:0,
+  last_sale_price:57000, last_sale_date:"2019-02-08", last_sale_deed:"05199-0422",
+  annual_tax:1360.41, // Montgomery County PAYMENT INFO - tax yr 2025, paid 2/13/2026
+  sources_line:"Comps: Redfin + Zillow, deed-verified at Montgomery County (CAPTURE CAMA). All included comps confirmed to recorded sale + deed #.",
   comps:[
-    {addr:"2331 Glendale Ave", sold:"", price:79900, sqft:1152, bd:2, ba:1,   class:"strong", status:"Homes.com (active)"},
-    {addr:"2440 Highland Ave", sold:"", price:95977, sqft:1500, bd:3, ba:2,   class:"strong", status:"Homes.com (active)"},
-    {addr:"139 Simpson St",    sold:"", price:69900, sqft:992,  bd:3, ba:1,   class:"strong", status:"Homes.com (active)"},
-    {addr:"1618 Midway St",    sold:"", price:86000, sqft:990,  bd:3, ba:1,   class:"strong", status:"Homes.com (active) — page-2 pick, verify"},
-    {addr:"1750 Yarbrough St", sold:"", price:79900, sqft:1092, bd:3, ba:1.5, class:"strong", status:"Homes.com (active) — page-2 pick, verify"}
+    {addr:"1032 Roslyn Dr",     sold:"2026-05-13", price:138000, sqft:2193, class:"strong", deed_verified:true, deed:"06464-962"},
+    {addr:"4720 Valerie Cir",   sold:"2026-06-01", price:135000, sqft:1767, class:"strong", deed_verified:true, deed:"06476-734"},
+    {addr:"2721 S Colonial Dr", sold:"2026-04-24", price:185000, sqft:2464, class:"strong", deed_verified:true, deed:"06457-184"},
+    {addr:"1415 Wedgewood Dr",  sold:"2026-04-02", price:140000, sqft:null, class:"excl", deed_verified:false, deed:"06446-139", calc_note:"County last priced sale $79,000 (5/3/2023); 4/2/2026 deed 06446-139 carries no recorded price - Zillow $140K cannot be confirmed. Excluded."}
   ]
 });
 // ===== END LOADED DEAL =====
