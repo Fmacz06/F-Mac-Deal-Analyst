@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F Mac Capital — ARV Calculator</title>
+<style>
+  :root{
+    --navy:#1f2d4d; --navy2:#26365c; --ink:#1f2d4d;
+    --soft-blue:#bcd0ea; --soft-blue-line:#9db8d8;
+    --green:#c6efd3; --green-ink:#1f7a45; --green-card:#e7f7ee; --green-bd:#bfe6cd;
+    --red:#f9cfcf; --red-ink:#b02a25; --red-card:#fdeaea; --red-bd:#f2c4c4;
+    --amber:#fbe7ad; --amber-card:#fdf4d8; --amber-bd:#ecd99a;
+    --cool:#dcebf8; --cool-bd:#b6d3ec; --hot:#f7d6d0; --hot-bd:#e6b4aa;
+    --muted:#5e6a82;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#eef1f5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,Helvetica,sans-serif;color:var(--ink);}
+  /* ---------- App layout ---------- */
+  .app{display:grid;grid-template-columns:430px 1fr;min-height:100vh;}
+  .panel{background:#fff;border-right:1px solid #dfe5ee;padding:18px 20px 60px;overflow-y:auto;height:100vh;position:sticky;top:0;}
+  .preview{padding:0;overflow-y:auto;height:100vh;}
+  .panel h1{font-size:18px;margin:0 0 2px;}
+  .panel .tag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;}
+  .panel .grp{margin-top:16px;border-top:1px solid #eef1f5;padding-top:14px;}
+  .panel .grp > .gt{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);font-weight:800;margin-bottom:8px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700;margin:8px 0 2px;}
+  input,select,textarea{width:100%;padding:6px 8px;border:1px solid #cfd8e6;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;}
+  textarea{resize:vertical;min-height:46px;}
+  .btn{display:inline-block;border:none;border-radius:7px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-ghost{background:#eef2f8;color:var(--navy);border:1px solid #d4deeb;}
+  .btn-mini{padding:4px 8px;font-size:11px;font-weight:700;border-radius:6px;border:1px solid #d4deeb;background:#eef2f8;color:var(--navy);cursor:pointer;}
+  .btn-row{display:flex;gap:8px;margin-top:14px;}
+  /* comp editor */
+  .comp{border:1px solid #e1e7ef;border-radius:8px;padding:10px;margin-bottom:10px;background:#f8fafc;position:relative;}
+  .comp .del{position:absolute;top:7px;right:8px;}
+  .comp .cls{display:flex;gap:5px;margin-top:6px;}
+  .comp .cls button{flex:1;font-size:10.5px;font-weight:800;padding:4px 0;border-radius:5px;border:1px solid #cfd8e6;background:#fff;cursor:pointer;text-transform:uppercase;letter-spacing:.4px;}
+  .comp .cls button.on.s{background:var(--green);border-color:#9bd9b3;}
+  .comp .cls button.on.n{background:var(--amber);border-color:#e3cf8c;}
+  .comp .cls button.on.e{background:var(--red);border-color:#eab2b2;}
+  .note-item{display:flex;gap:6px;margin-bottom:6px;}
+  .note-item textarea{min-height:34px;}
+  .hint{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4;}
+  /* ---------- REPORT (locked template) ---------- */
+  .page{max-width:850px;margin:24px auto;background:#fff;box-shadow:0 4px 22px rgba(0,0,0,.10);}
+  .hdr{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;padding:22px 30px 20px;position:relative;}
+  .hdr .eyebrow{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#a9bbdb;font-weight:700;}
+  .hdr h1{margin:4px 0 2px;font-size:27px;font-weight:800;letter-spacing:.3px;}
+  .hdr .sub{font-size:13px;color:#c4d2ea;}
+  .seal{position:absolute;top:16px;right:48px;width:179px;height:139px;transform:rotate(-15deg);transform-origin:center center;z-index:5;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px;}
+  .stat{background:var(--soft-blue);border-radius:8px;padding:9px 12px 11px;}
+  .stat .lbl{font-size:10.5px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;line-height:1.25;min-height:26px;}
+  .stat .val{font-size:21px;font-weight:800;color:var(--navy);margin-top:3px;}
+  .rbody{padding:24px 30px 30px;}
+  h2{font-size:15px;text-transform:uppercase;letter-spacing:1.2px;color:var(--navy);border-bottom:2px solid var(--soft-blue);padding-bottom:6px;margin:26px 0 14px;}
+  h2:first-child{margin-top:4px;}
+  .subj{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 14px;}
+  .subj .cell{background:#f6f8fb;border:1px solid #e3e9f1;border-radius:6px;padding:8px 10px;}
+  .subj .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;}
+  .subj .v{font-size:14px;font-weight:700;margin-top:2px;display:flex;align-items:center;gap:5px;}
+  .dombox{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-weight:800;font-size:13px;}
+  .dom-cool{background:var(--cool);border:1px solid var(--cool-bd);color:#2a6699;}
+  .dom-hot{background:var(--hot);border:1px solid var(--hot-bd);color:#b23b2b;}
+  .dombox svg{width:15px;height:15px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{background:var(--soft-blue);color:var(--navy);text-align:left;padding:9px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border:1px solid var(--soft-blue-line);}
+  tbody td{padding:8px 10px;border:1px solid #e1e7ef;}
+  tr.comp-strong td{background:var(--green);}
+  tr.comp-note td{background:var(--amber);}
+  tr.comp-excl td{background:var(--red);color:#7d2420;}
+  .calc{background:#f6f8fb;border:1px solid #e3e9f1;border-radius:8px;padding:14px 18px;}
+  .calc-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13.5px;border-bottom:1px dashed #dce3ee;}
+  .calc-row:last-child{border-bottom:none;}
+  .calc-row.sub{color:var(--muted);font-size:12.5px;padding-left:14px;}
+  .calc-row.total{font-weight:800;font-size:16px;color:var(--navy);border-top:2px solid var(--soft-blue);margin-top:4px;padding-top:9px;}
+  .calc-row.adj{color:var(--red-ink);font-weight:700;}
+  .certrow{margin:10px 0 4px;}
+  .comprow{display:grid;grid-template-columns:1.6fr .8fr .9fr .7fr .5fr .5fr .8fr 22px;gap:4px;align-items:center;margin-bottom:5px;}
+  .comprow input,.comprow select{width:100%;padding:5px 6px;font-size:11px;box-sizing:border-box;}
+  .comprow .cx{border:none;background:none;color:#c0392b;font-weight:800;cursor:pointer;font-size:15px;line-height:1;padding:0;}
+  .comphdr{display:grid;grid-template-columns:1.6fr .8fr .9fr .7fr .5fr .5fr .8fr 22px;gap:4px;font-size:9.5px;font-weight:700;color:#5a6b8c;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;}
+  .addcomp{margin-top:6px;font-size:12px;font-weight:700;color:var(--navy);background:#eef3ff;border:1px dashed var(--soft-blue-line);border-radius:7px;padding:7px;width:100%;cursor:pointer;}
+  .rentalbox{border:2px solid var(--soft-blue-line);background:#f5f8ff;border-radius:10px;padding:14px 16px;margin:4px 0 18px;}
+  .rentalhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;font-size:13px;color:var(--navy);}
+  .rentbig{font-size:24px;font-weight:800;color:var(--navy);white-space:nowrap;}
+  .rentbig span{font-size:13px;font-weight:600;color:#5a6b8c;}
+  .rentalbox table{margin:0;}
+  .goldbadge{display:inline-block;vertical-align:middle;font-size:11px;font-weight:800;letter-spacing:.5px;color:#5a4500;background:linear-gradient(180deg,#ffe79a,#e8b923);border:1px solid #c9930a;border-radius:20px;padding:3px 10px;box-shadow:0 1px 2px rgba(0,0,0,.25);text-shadow:0 1px 0 rgba(255,255,255,.4);}
+  .unverbadge{display:inline-block;vertical-align:middle;font-size:11px;font-weight:800;letter-spacing:.5px;color:#fff;background:linear-gradient(180deg,#e2574c,#c0392b);border:1px solid #9d2b1f;border-radius:20px;padding:3px 10px;box-shadow:0 1px 2px rgba(0,0,0,.25);text-shadow:0 1px 0 rgba(0,0,0,.2);}
+  .srcgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:4px 0 6px;}
+  .scell{background:#f6f8fb;border:1px solid #e3e9f1;border-radius:8px;padding:10px 12px;text-align:center;}
+  .scell .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700;}
+  .scell .v{font-size:15px;font-weight:800;color:var(--navy);margin-top:3px;}
+  .scell.hero{background:var(--soft-blue);border-color:#b9cde6;}
+  .srcnote{font-size:12px;color:#5e6a82;margin:2px 0 2px;line-height:1.5;}
+  .vchk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.3px;color:#0f6b34;background:#dff3e6;border:1px solid #9bd4b1;border-radius:4px;padding:1px 5px;vertical-align:middle;white-space:nowrap;}
+  .ctag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.3px;color:#7a4f00;background:#fdeecf;border:1px solid #e2c074;border-radius:4px;padding:1px 4px;vertical-align:middle;white-space:nowrap;text-transform:uppercase;}
+  .vsale{margin:10px 0 2px;padding:9px 12px;background:#f1f8f3;border:1px solid #cce7d6;border-radius:8px;font-size:13px;color:#214a32;}
+  .vsale .vsrc{color:#5e8a6e;font-size:11.5px;margin-left:4px;}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .card{border-radius:10px;padding:16px 18px;}
+  .card.cost{background:var(--red-card);border:1px solid var(--red-bd);}
+  .card.ret{background:var(--green-card);border:1px solid var(--green-bd);}
+  .card h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.8px;}
+  .card.cost h3{color:var(--red-ink);}
+  .card.ret h3{color:var(--green-ink);}
+  .card .line{display:flex;justify-content:space-between;padding:4px 0;font-size:13.5px;border-bottom:1px dashed rgba(0,0,0,.08);}
+  .card .line:last-child{border-bottom:none;}
+  .card .line.big{font-weight:800;font-size:16px;padding-top:8px;}
+  .card.cost .line.big{color:var(--red-ink);}
+  .card.ret .line.big{color:var(--green-ink);}
+  .neg{color:var(--red-ink);font-weight:800;}
+  .pos{color:var(--green-ink);font-weight:800;}
+  .rule3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;}
+  .rb{background:#f6f8fb;border:1px solid #e3e9f1;border-radius:8px;padding:12px;text-align:center;}
+  .rb .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;}
+  .rb .v{font-size:20px;font-weight:800;color:var(--navy);margin-top:4px;}
+  .callout{border-radius:10px;padding:14px 18px;}
+  .callout.fail{background:var(--red-card);border:1px solid var(--red-bd);}
+  .callout.pass{background:var(--green-card);border:1px solid var(--green-bd);}
+  .callout .head{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800;}
+  .callout.fail .head{color:var(--red-ink);}
+  .callout.pass .head{color:var(--green-ink);}
+  .callout .subh{font-size:13px;margin:4px 0 8px;color:#444;}
+  .callout ul{margin:6px 0 0;padding-left:20px;font-size:13px;line-height:1.55;}
+  .notes{background:var(--amber-card);border:1px solid var(--amber-bd);border-radius:10px;padding:16px 20px;}
+  .notes ul{margin:0;padding-left:20px;font-size:13px;line-height:1.65;}
+  .notes li{margin-bottom:5px;}
+  .sources{margin-top:12px;padding-top:10px;border-top:1px solid var(--amber-bd);font-size:11.5px;color:#7a6a3a;}
+  .disclaimer{font-size:11px;color:var(--muted);margin-top:18px;line-height:1.5;border-top:1px solid #e3e9f1;padding-top:12px;}
+  .nightbtn{font-size:11px;font-weight:700;vertical-align:middle;margin-left:8px;padding:4px 9px;border-radius:14px;border:1px solid #cfd8e6;background:#eef2f8;color:var(--navy);cursor:pointer;}
+  /* ============ NIGHT VERSION ============ */
+  /* Soft dark grays replace white/off-white surfaces; all the colored accents
+     (navy header, soft-blue stats, green/amber/red cards & comp rows) stay as-is. */
+  body.night{background:#121417;color:#e6e9ef;}
+  body.night .panel{background:#181b1f;border-right-color:#2c3037;}
+  body.night .panel .grp{border-top-color:#2c3037;}
+  body.night .panel .grp > .gt{color:#d3dcec;}
+  body.night .panel h1{color:#eef1f6;}
+  body.night label{color:#8b94a3;}
+  body.night input,body.night select,body.night textarea{background:#22262c;border-color:#373d45;color:#eef1f6;}
+  body.night .hint,body.night .comphdr{color:#7e8794;}
+  body.night .btn-ghost,body.night .btn-mini,body.night .nightbtn{background:#22262c;border-color:#373d45;color:#d3dcec;}
+  body.night .comp{background:#1c2025;border-color:#33383f;}
+  body.night .comp .cls button{background:#22262c;border-color:#373d45;color:#eef1f6;}
+  body.night .addcomp{background:#1e2533;border-color:#373d45;color:#d3dcec;}
+  /* report card + interior gray boxes */
+  body.night .page{background:#181b1f;box-shadow:0 4px 30px rgba(0,0,0,.6);}
+  body.night h2{color:#d3dcec;border-bottom-color:#39435c;}
+  body.night .subj .cell,body.night .calc,body.night .scell,body.night .rb{background:#1c2025;border-color:#33383f;}
+  body.night .subj .k,body.night .scell .k,body.night .rb .k{color:#8b94a3;}
+  body.night .subj .v,body.night .scell .v,body.night .rb .v,body.night .calc-row.total{color:#eef1f6;}
+  body.night .calc-row{border-bottom-color:#2f343b;color:#e6e9ef;}
+  body.night .calc-row.total{border-top-color:#39435c;}
+  body.night .calc-row.sub{color:#8b94a3;}
+  body.night tbody td{border-color:#33383f;color:#e6e9ef;}
+  /* keep colored comp rows readable (dark text on their light color) */
+  body.night tr.comp-strong td,body.night tr.comp-note td{color:#1f2d4d;}
+  body.night .rentalbox{background:#1e2533;border-color:#39435c;}
+  body.night .rentalhead{color:#d3dcec;}
+  body.night .rentbig{color:#eef1f6;}
+  body.night .rentbig span{color:#9aa3b2;}
+  body.night .srcnote{color:#9aa3b2;}
+  body.night .disclaimer{color:#8f98a7;border-top-color:#444a53;}
+  /* These boxes keep their light color fills, so their text stays dark for contrast */
+  body.night .card .line,body.night .callout,body.night .callout ul,body.night .callout li,
+  body.night .notes,body.night .notes ul,body.night .notes li{color:#28324a;}
+  body.night .callout .subh{color:#444;}
+  body.night .sources{color:#7a6a3a;}
+  @media print{
+    @page{margin:12mm;}
+    /* Full color: force browsers to print background colors / accents */
+    *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+    /* Always print the white/day report regardless of the night auto-theme */
+    body,body.night{background:#fff !important;color:var(--ink) !important;}
+    body.night .page{background:#fff !important;}
+    /* Right side only — hide the entire input panel */
+    .panel{display:none !important;}
+    .app{display:block;}
+    .preview{height:auto;overflow:visible;}
+    .page{box-shadow:none;margin:0 auto;max-width:100%;}
+    h2{break-after:avoid;}
+    .cards,.rule3,table{break-inside:avoid;}
+  }
+</style>
+<!-- Color-accurate PDF export (rasterizes the live report exactly as seen on screen) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <!-- ================= INPUT PANEL ================= -->
+  <div class="panel">
+    <div class="tag">F Mac Capital</div>
+    <h1>ARV Calculator <button type="button" id="nightToggle" class="nightbtn" onclick="toggleNight()" title="Toggle night version">🌙 Night</button></h1>
+    <p class="hint">Enter a Montgomery County address. Comps are pulled from Redfin + Zillow, then each sale is verified against Montgomery County deeds; the report builds on the right. Conservative ARV + 70% Rule.</p>
+
+    <div class="grp">
+      <div class="gt">Deal Inputs</div>
+      <label>Property Address</label>
+      <input id="address" placeholder="901 Seibles Rd, Montgomery, AL 36116">
+      <label>Purchase Price ($) — blank = use Zillow list price</label>
+      <input id="purchase_price" type="number" placeholder="auto from Zillow">
+      <label>Rehab Budget ($) — optional</label>
+      <input id="rehab_budget" type="number" placeholder="0">
+      <p class="hint">Give just an address → purchase price is taken from Zillow's list price and rehab is assumed $0. Type a purchase and/or rehab and they're trusted as-is (no lookup). Comps: Redfin + Zillow sales, each cross-checked to the county deed — county-recorded price always wins.</p>
+    </div>
+
+    <div class="grp">
+      <div class="gt">Mortgage Inputs</div>
+      <label>Down Payment (%)</label>
+      <input id="down_pct" type="number" step="0.5" placeholder="20">
+      <label>Interest Rate (%)</label>
+      <input id="interest_rate" type="number" step="0.05" placeholder="7">
+      <label>Loan Term (years)</label>
+      <input id="loan_term" type="number" step="1" placeholder="30">
+      <p class="hint">Defaults: 20% down, 7% rate, 30-yr amortization (applied across the board unless changed here). Adjust any field and hit Generate Report to recompute the monthly P&amp;I and cash flow.</p>
+    </div>
+
+    <div class="grp">
+      <div class="gt">Comps (manual entry)</div>
+      <div class="comphdr"><span>Address</span><span>Sold</span><span>Price</span><span>Sq Ft</span><span>Bd</span><span>Ba</span><span>Class</span><span></span></div>
+      <div id="compRows"></div>
+      <button type="button" class="addcomp" onclick="addCompRow()">+ Add comp</button>
+      <p class="hint">Comps pulled from Homes.com (then deed-verified at the courthouse). Class: <strong>Strong</strong>/<strong>Note</strong> are averaged into the ARV; <strong>Exclude</strong> shows but isn't averaged. Edit any field and hit Generate Report.</p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+      <button class="btn" onclick="savePDF()">💾 Save PDF (report only)</button>
+      <button class="btn" onclick="exportDeal()">⬇︎ Export Deal</button>
+      <button class="btn" onclick="document.getElementById('importDeal').click()">⬆︎ Import Deal</button>
+      <input type="file" id="importDeal" accept=".json,application/json" style="display:none" onchange="importDealFile(this)">
+    </div>
+  </div>
+
+  <!-- ================= REPORT PREVIEW ================= -->
+  <div class="preview"><div class="page" id="report"></div></div>
+</div>
+
+<script>
+// ---- Night version: auto by time of day (dark 7:00 PM–5:00 AM, white 5:00 AM–7:00 PM) ----
+function applyNight(on){
+  document.body.classList.toggle('night', on);
+  const b = document.getElementById('nightToggle');
+  if(b) b.textContent = on ? '☀️ Day' : '🌙 Night';
+}
+function isNightTime(){ const h = new Date().getHours(); return h >= 19 || h < 5; } // dark from 19:00 to 04:59
+function autoNight(){ applyNight(isNightTime()); }          // follow the clock
+function toggleNight(){ applyNight(!document.body.classList.contains('night')); } // manual flip (auto re-checks each minute)
+document.addEventListener('DOMContentLoaded', ()=>{ autoNight(); setInterval(autoNight, 60000); });
+
+// ---- Save / Print PDF (right-side report only, full color, white) ----
+// Filename defaults to "<street address> Analyst" — browsers use document.title for the Save-as-PDF name.
+function dealName(){
+  let a = (document.getElementById('address') && document.getElementById('address').value)
+          || (window.DEAL && DEAL.address) || 'Deal';
+  a = String(a).split(',')[0].trim();          // keep just street # + street, drop city/state/zip
+  a = a.replace(/[\/:*?"<>|]+/g,'').trim();     // filesystem-safe
+  return (a || 'Deal') + ' Analyst';
+}
+let _nightBeforePrint = false;
+window.addEventListener('beforeprint', ()=>{ _nightBeforePrint = document.body.classList.contains('night'); document.body.classList.remove('night'); });
+window.addEventListener('afterprint',  ()=>{ if(_nightBeforePrint) document.body.classList.add('night'); });
+
+// Fallback (offline / libs unavailable): browser print dialog -> Save as PDF.
+function savePDFprint(){
+  const orig = document.title;
+  document.title = dealName();
+  window.print();
+  setTimeout(()=>{ document.title = orig; }, 1000);
+}
+
+// Primary: rasterize the live report in FULL COLOR (exactly as on screen) and build a
+// multi-page PDF directly — no print dialog, so color is never dropped to grayscale.
+function savePDF(){
+  const page = document.querySelector('.page');
+  if(!page || !window.html2canvas || !window.jspdf){ savePDFprint(); return; } // graceful fallback
+  const btns = document.querySelectorAll('.btn-row .btn');
+  btns.forEach(b=>b.disabled=true);
+  const wasNight = document.body.classList.contains('night');
+  document.body.classList.remove('night');      // always export the clean white report
+  html2canvas(page, {scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false,
+                      windowWidth:page.scrollWidth, scrollX:0, scrollY:0})
+    .then(canvas=>{
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p','pt','letter');
+      const pw = pdf.internal.pageSize.getWidth();
+      const ph = pdf.internal.pageSize.getHeight();
+      const imgH = canvas.height * (pw / canvas.width);   // image scaled to full page width
+      const img = canvas.toDataURL('image/jpeg', 0.95);
+      let pos = 0, remaining = imgH;
+      pdf.addImage(img, 'JPEG', 0, pos, pw, imgH);
+      remaining -= ph;
+      while(remaining > 0){ pos -= ph; pdf.addPage(); pdf.addImage(img, 'JPEG', 0, pos, pw, imgH); remaining -= ph; }
+      pdf.save(dealName()+'.pdf');
+    })
+    .catch(()=>{ savePDFprint(); })
+    .finally(()=>{ if(wasNight) document.body.classList.add('night'); btns.forEach(b=>b.disabled=false); });
+}
+// ---- Seals (verbatim from F Mac stamps) ----
+const SEALS = {
+green: `<svg viewBox="0 0 150 116" xmlns="http://www.w3.org/2000/svg"><defs><filter id="rg"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.7"/></filter></defs><g filter="url(#rg)"><path d="M75.00 5.00 L78.35 11.12 L82.54 5.54 L84.99 12.07 L89.93 7.15 L91.42 13.96 L97.02 9.79 L97.52 16.75 L103.65 13.41 L103.17 20.37 L109.71 17.95 L108.23 24.77 L115.05 23.29 L112.63 29.83 L119.59 29.35 L116.25 35.48 L123.21 35.98 L119.04 41.58 L125.85 43.07 L120.93 48.01 L127.46 50.46 L121.88 54.65 L128.00 58.00 L121.88 61.35 L127.46 65.54 L120.93 67.99 L125.85 72.93 L119.04 74.42 L123.21 80.02 L116.25 80.52 L119.59 86.65 L112.63 86.17 L115.05 92.71 L108.23 91.23 L109.71 98.05 L103.17 95.63 L103.65 102.59 L97.52 99.25 L97.02 106.21 L91.42 102.04 L89.93 108.85 L84.99 103.93 L82.54 110.46 L78.35 104.88 L75.00 111.00 L71.65 104.88 L67.46 110.46 L65.01 103.93 L60.07 108.85 L58.58 102.04 L52.98 106.21 L52.48 99.25 L46.35 102.59 L46.83 95.63 L40.29 98.05 L41.77 91.23 L34.95 92.71 L37.37 86.17 L30.41 86.65 L33.75 80.52 L26.79 80.02 L30.96 74.42 L24.15 72.93 L29.07 67.99 L22.54 65.54 L28.12 61.35 L22.00 58.00 L28.12 54.65 L22.54 50.46 L29.07 48.01 L24.15 43.07 L30.96 41.58 L26.79 35.98 L33.75 35.48 L30.41 29.35 L37.37 29.83 L34.95 23.29 L41.77 24.77 L40.29 17.95 L46.83 20.37 L46.35 13.41 L52.48 16.75 L52.98 9.79 L58.58 13.96 L60.07 7.15 L65.01 12.07 L67.46 5.54 L71.65 11.12 Z M 119.00 58.00 A 44 44 0 1 1 31.00 58.00 A 44 44 0 1 1 119.00 58.00 Z" fill="#1f9d4d" fill-rule="evenodd"/><circle cx="75" cy="58" r="31" fill="none" stroke="#1f9d4d" stroke-width="1.3"/><text x="44.26" y="35.66" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(306.00 44.26 35.66)">F</text><text x="48.99" y="30.30" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(316.80 48.99 30.30)">R</text><text x="54.64" y="25.92" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(327.60 54.64 25.92)">E</text><text x="61.01" y="22.67" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(338.40 61.01 22.67)">D</text><text x="67.88" y="20.67" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(349.20 67.88 20.67)">D</text><text x="75.00" y="20.00" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(360.00 75.00 20.00)">I</text><text x="82.12" y="20.67" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(370.80 82.12 20.67)">E</text><text x="88.99" y="22.67" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(381.60 88.99 22.67)"> </text><text x="95.36" y="25.92" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(392.40 95.36 25.92)">M</text><text x="101.01" y="30.30" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(403.20 101.01 30.30)">A</text><text x="105.74" y="35.66" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(414.00 105.74 35.66)">C</text><text x="46.32" y="82.93" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(49.00 46.32 82.93)">A</text><text x="53.20" y="89.13" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(35.00 53.20 89.13)">P</text><text x="61.38" y="93.48" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(21.00 61.38 93.48)">P</text><text x="70.37" y="95.72" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(7.00 70.37 95.72)">R</text><text x="79.63" y="95.72" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-7.00 79.63 95.72)">O</text><text x="88.62" y="93.48" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-21.00 88.62 93.48)">V</text><text x="96.80" y="89.13" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-35.00 96.80 89.13)">E</text><text x="103.68" y="82.93" fill="#1f9d4d" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-49.00 103.68 82.93)">D</text><polygon points="40.29,40.14 40.92,41.67 42.57,41.80 41.31,42.88 41.70,44.49 40.29,43.62 38.87,44.49 39.26,42.88 38.00,41.80 39.65,41.67" fill="#1f9d4d"/><polygon points="109.71,40.14 110.35,41.67 112.00,41.80 110.74,42.88 111.13,44.49 109.71,43.62 108.30,44.49 108.69,42.88 107.43,41.80 109.08,41.67" fill="#1f9d4d"/><polygon points="107.91,74.60 108.54,76.13 110.19,76.26 108.94,77.33 109.32,78.94 107.91,78.08 106.50,78.94 106.88,77.33 105.63,76.26 107.27,76.13" fill="#1f9d4d"/><polygon points="42.09,74.60 42.73,76.13 44.37,76.26 43.12,77.33 43.50,78.94 42.09,78.08 40.68,78.94 41.06,77.33 39.81,76.26 41.46,76.13" fill="#1f9d4d"/><polygon points="66.40,34.14 66.64,35.43 67.89,35.80 66.74,36.43 66.77,37.74 65.82,36.84 64.59,37.27 65.15,36.09 64.35,35.05 65.65,35.22" fill="#1f9d4d"/><polygon points="77.69,30.82 78.46,32.13 79.98,32.04 78.97,33.17 79.53,34.58 78.14,33.98 76.97,34.94 77.11,33.43 75.83,32.62 77.31,32.29" fill="#1f9d4d"/><polygon points="88.58,36.40 88.63,37.57 89.70,38.06 88.60,38.47 88.47,39.63 87.74,38.72 86.59,38.95 87.24,37.97 86.66,36.95 87.79,37.26" fill="#1f9d4d"/><polygon points="63.53,77.26 64.29,78.24 65.51,78.02 64.81,79.04 65.40,80.13 64.21,79.78 63.35,80.68 63.32,79.44 62.20,78.91 63.37,78.49" fill="#1f9d4d"/><polygon points="78.23,79.81 78.66,81.26 80.15,81.54 78.90,82.40 79.10,83.91 77.90,82.98 76.53,83.63 77.03,82.21 75.99,81.11 77.50,81.14" fill="#1f9d4d"/><polygon points="89.53,76.38 89.62,77.55 90.70,78.00 89.62,78.45 89.53,79.62 88.76,78.73 87.62,79.00 88.23,78.00 87.62,77.00 88.76,77.27" fill="#1f9d4d"/><g transform="rotate(-6 75 58)"><polygon points="8,47 142,47 134,58 142,69 8,69 16,58" fill="none" stroke="#1f9d4d" stroke-width="3.2" stroke-linejoin="miter"/><text x="75" y="58.8" text-anchor="middle" dominant-baseline="middle" fill="#1f9d4d" font-family="Arial Black,Arial,sans-serif" font-size="24" font-weight="900" letter-spacing="2">PASS</text></g></g></svg>`,
+yellow: `<svg viewBox="0 0 150 116" xmlns="http://www.w3.org/2000/svg"><defs><filter id="ry"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.7"/></filter></defs><g filter="url(#ry)"><path d="M75.00 5.00 L78.35 11.12 L82.54 5.54 L84.99 12.07 L89.93 7.15 L91.42 13.96 L97.02 9.79 L97.52 16.75 L103.65 13.41 L103.17 20.37 L109.71 17.95 L108.23 24.77 L115.05 23.29 L112.63 29.83 L119.59 29.35 L116.25 35.48 L123.21 35.98 L119.04 41.58 L125.85 43.07 L120.93 48.01 L127.46 50.46 L121.88 54.65 L128.00 58.00 L121.88 61.35 L127.46 65.54 L120.93 67.99 L125.85 72.93 L119.04 74.42 L123.21 80.02 L116.25 80.52 L119.59 86.65 L112.63 86.17 L115.05 92.71 L108.23 91.23 L109.71 98.05 L103.17 95.63 L103.65 102.59 L97.52 99.25 L97.02 106.21 L91.42 102.04 L89.93 108.85 L84.99 103.93 L82.54 110.46 L78.35 104.88 L75.00 111.00 L71.65 104.88 L67.46 110.46 L65.01 103.93 L60.07 108.85 L58.58 102.04 L52.98 106.21 L52.48 99.25 L46.35 102.59 L46.83 95.63 L40.29 98.05 L41.77 91.23 L34.95 92.71 L37.37 86.17 L30.41 86.65 L33.75 80.52 L26.79 80.02 L30.96 74.42 L24.15 72.93 L29.07 67.99 L22.54 65.54 L28.12 61.35 L22.00 58.00 L28.12 54.65 L22.54 50.46 L29.07 48.01 L24.15 43.07 L30.96 41.58 L26.79 35.98 L33.75 35.48 L30.41 29.35 L37.37 29.83 L34.95 23.29 L41.77 24.77 L40.29 17.95 L46.83 20.37 L46.35 13.41 L52.48 16.75 L52.98 9.79 L58.58 13.96 L60.07 7.15 L65.01 12.07 L67.46 5.54 L71.65 11.12 Z M 119.00 58.00 A 44 44 0 1 1 31.00 58.00 A 44 44 0 1 1 119.00 58.00 Z" fill="#cf9410" fill-rule="evenodd"/><circle cx="75" cy="58" r="31" fill="none" stroke="#cf9410" stroke-width="1.3"/><text x="44.26" y="35.66" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(306.00 44.26 35.66)">F</text><text x="48.99" y="30.30" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(316.80 48.99 30.30)">R</text><text x="54.64" y="25.92" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(327.60 54.64 25.92)">E</text><text x="61.01" y="22.67" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(338.40 61.01 22.67)">D</text><text x="67.88" y="20.67" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(349.20 67.88 20.67)">D</text><text x="75.00" y="20.00" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(360.00 75.00 20.00)">I</text><text x="82.12" y="20.67" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(370.80 82.12 20.67)">E</text><text x="88.99" y="22.67" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(381.60 88.99 22.67)"> </text><text x="95.36" y="25.92" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(392.40 95.36 25.92)">M</text><text x="101.01" y="30.30" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(403.20 101.01 30.30)">A</text><text x="105.74" y="35.66" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(414.00 105.74 35.66)">C</text><text x="46.32" y="82.93" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(49.00 46.32 82.93)">R</text><text x="56.35" y="91.11" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(29.40 56.35 91.11)">E</text><text x="68.53" y="95.45" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(9.80 68.53 95.45)">V</text><text x="81.47" y="95.45" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-9.80 81.47 95.45)">I</text><text x="93.65" y="91.11" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-29.40 93.65 91.11)">E</text><text x="103.68" y="82.93" fill="#cf9410" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-49.00 103.68 82.93)">W</text><polygon points="40.29,40.14 40.92,41.67 42.57,41.80 41.31,42.88 41.70,44.49 40.29,43.62 38.87,44.49 39.26,42.88 38.00,41.80 39.65,41.67" fill="#cf9410"/><polygon points="109.71,40.14 110.35,41.67 112.00,41.80 110.74,42.88 111.13,44.49 109.71,43.62 108.30,44.49 108.69,42.88 107.43,41.80 109.08,41.67" fill="#cf9410"/><polygon points="107.91,74.60 108.54,76.13 110.19,76.26 108.94,77.33 109.32,78.94 107.91,78.08 106.50,78.94 106.88,77.33 105.63,76.26 107.27,76.13" fill="#cf9410"/><polygon points="42.09,74.60 42.73,76.13 44.37,76.26 43.12,77.33 43.50,78.94 42.09,78.08 40.68,78.94 41.06,77.33 39.81,76.26 41.46,76.13" fill="#cf9410"/><polygon points="66.40,34.14 66.64,35.43 67.89,35.80 66.74,36.43 66.77,37.74 65.82,36.84 64.59,37.27 65.15,36.09 64.35,35.05 65.65,35.22" fill="#cf9410"/><polygon points="77.69,30.82 78.46,32.13 79.98,32.04 78.97,33.17 79.53,34.58 78.14,33.98 76.97,34.94 77.11,33.43 75.83,32.62 77.31,32.29" fill="#cf9410"/><polygon points="88.58,36.40 88.63,37.57 89.70,38.06 88.60,38.47 88.47,39.63 87.74,38.72 86.59,38.95 87.24,37.97 86.66,36.95 87.79,37.26" fill="#cf9410"/><polygon points="63.53,77.26 64.29,78.24 65.51,78.02 64.81,79.04 65.40,80.13 64.21,79.78 63.35,80.68 63.32,79.44 62.20,78.91 63.37,78.49" fill="#cf9410"/><polygon points="78.23,79.81 78.66,81.26 80.15,81.54 78.90,82.40 79.10,83.91 77.90,82.98 76.53,83.63 77.03,82.21 75.99,81.11 77.50,81.14" fill="#cf9410"/><polygon points="89.53,76.38 89.62,77.55 90.70,78.00 89.62,78.45 89.53,79.62 88.76,78.73 87.62,79.00 88.23,78.00 87.62,77.00 88.76,77.27" fill="#cf9410"/><g transform="rotate(-6 75 58)"><polygon points="8,47 142,47 134,58 142,69 8,69 16,58" fill="none" stroke="#cf9410" stroke-width="3.2" stroke-linejoin="miter"/><text x="75" y="58.8" text-anchor="middle" dominant-baseline="middle" fill="#cf9410" font-family="Arial Black,Arial,sans-serif" font-size="24" font-weight="900" letter-spacing="2">HOLD</text></g></g></svg>`,
+red: `<svg viewBox="0 0 150 116" xmlns="http://www.w3.org/2000/svg"><defs><filter id="rr"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.7"/></filter></defs><g filter="url(#rr)"><path d="M75.00 5.00 L78.35 11.12 L82.54 5.54 L84.99 12.07 L89.93 7.15 L91.42 13.96 L97.02 9.79 L97.52 16.75 L103.65 13.41 L103.17 20.37 L109.71 17.95 L108.23 24.77 L115.05 23.29 L112.63 29.83 L119.59 29.35 L116.25 35.48 L123.21 35.98 L119.04 41.58 L125.85 43.07 L120.93 48.01 L127.46 50.46 L121.88 54.65 L128.00 58.00 L121.88 61.35 L127.46 65.54 L120.93 67.99 L125.85 72.93 L119.04 74.42 L123.21 80.02 L116.25 80.52 L119.59 86.65 L112.63 86.17 L115.05 92.71 L108.23 91.23 L109.71 98.05 L103.17 95.63 L103.65 102.59 L97.52 99.25 L97.02 106.21 L91.42 102.04 L89.93 108.85 L84.99 103.93 L82.54 110.46 L78.35 104.88 L75.00 111.00 L71.65 104.88 L67.46 110.46 L65.01 103.93 L60.07 108.85 L58.58 102.04 L52.98 106.21 L52.48 99.25 L46.35 102.59 L46.83 95.63 L40.29 98.05 L41.77 91.23 L34.95 92.71 L37.37 86.17 L30.41 86.65 L33.75 80.52 L26.79 80.02 L30.96 74.42 L24.15 72.93 L29.07 67.99 L22.54 65.54 L28.12 61.35 L22.00 58.00 L28.12 54.65 L22.54 50.46 L29.07 48.01 L24.15 43.07 L30.96 41.58 L26.79 35.98 L33.75 35.48 L30.41 29.35 L37.37 29.83 L34.95 23.29 L41.77 24.77 L40.29 17.95 L46.83 20.37 L46.35 13.41 L52.48 16.75 L52.98 9.79 L58.58 13.96 L60.07 7.15 L65.01 12.07 L67.46 5.54 L71.65 11.12 Z M 119.00 58.00 A 44 44 0 1 1 31.00 58.00 A 44 44 0 1 1 119.00 58.00 Z" fill="#cc3328" fill-rule="evenodd"/><circle cx="75" cy="58" r="31" fill="none" stroke="#cc3328" stroke-width="1.3"/><text x="44.26" y="35.66" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(306.00 44.26 35.66)">F</text><text x="48.99" y="30.30" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(316.80 48.99 30.30)">R</text><text x="54.64" y="25.92" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(327.60 54.64 25.92)">E</text><text x="61.01" y="22.67" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(338.40 61.01 22.67)">D</text><text x="67.88" y="20.67" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(349.20 67.88 20.67)">D</text><text x="75.00" y="20.00" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(360.00 75.00 20.00)">I</text><text x="82.12" y="20.67" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(370.80 82.12 20.67)">E</text><text x="88.99" y="22.67" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(381.60 88.99 22.67)"> </text><text x="95.36" y="25.92" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(392.40 95.36 25.92)">M</text><text x="101.01" y="30.30" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(403.20 101.01 30.30)">A</text><text x="105.74" y="35.66" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(414.00 105.74 35.66)">C</text><text x="46.32" y="82.93" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(49.00 46.32 82.93)">R</text><text x="53.20" y="89.13" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(35.00 53.20 89.13)">E</text><text x="61.38" y="93.48" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(21.00 61.38 93.48)">J</text><text x="70.37" y="95.72" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(7.00 70.37 95.72)">E</text><text x="79.63" y="95.72" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-7.00 79.63 95.72)">C</text><text x="88.62" y="93.48" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-21.00 88.62 93.48)">T</text><text x="96.80" y="89.13" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-35.00 96.80 89.13)">E</text><text x="103.68" y="82.93" fill="#cc3328" font-size="10" font-weight="800" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-49.00 103.68 82.93)">D</text><polygon points="40.29,40.14 40.92,41.67 42.57,41.80 41.31,42.88 41.70,44.49 40.29,43.62 38.87,44.49 39.26,42.88 38.00,41.80 39.65,41.67" fill="#cc3328"/><polygon points="109.71,40.14 110.35,41.67 112.00,41.80 110.74,42.88 111.13,44.49 109.71,43.62 108.30,44.49 108.69,42.88 107.43,41.80 109.08,41.67" fill="#cc3328"/><polygon points="107.91,74.60 108.54,76.13 110.19,76.26 108.94,77.33 109.32,78.94 107.91,78.08 106.50,78.94 106.88,77.33 105.63,76.26 107.27,76.13" fill="#cc3328"/><polygon points="42.09,74.60 42.73,76.13 44.37,76.26 43.12,77.33 43.50,78.94 42.09,78.08 40.68,78.94 41.06,77.33 39.81,76.26 41.46,76.13" fill="#cc3328"/><polygon points="66.40,34.14 66.64,35.43 67.89,35.80 66.74,36.43 66.77,37.74 65.82,36.84 64.59,37.27 65.15,36.09 64.35,35.05 65.65,35.22" fill="#cc3328"/><polygon points="77.69,30.82 78.46,32.13 79.98,32.04 78.97,33.17 79.53,34.58 78.14,33.98 76.97,34.94 77.11,33.43 75.83,32.62 77.31,32.29" fill="#cc3328"/><polygon points="88.58,36.40 88.63,37.57 89.70,38.06 88.60,38.47 88.47,39.63 87.74,38.72 86.59,38.95 87.24,37.97 86.66,36.95 87.79,37.26" fill="#cc3328"/><polygon points="63.53,77.26 64.29,78.24 65.51,78.02 64.81,79.04 65.40,80.13 64.21,79.78 63.35,80.68 63.32,79.44 62.20,78.91 63.37,78.49" fill="#cc3328"/><polygon points="78.23,79.81 78.66,81.26 80.15,81.54 78.90,82.40 79.10,83.91 77.90,82.98 76.53,83.63 77.03,82.21 75.99,81.11 77.50,81.14" fill="#cc3328"/><polygon points="89.53,76.38 89.62,77.55 90.70,78.00 89.62,78.45 89.53,79.62 88.76,78.73 87.62,79.00 88.23,78.00 87.62,77.00 88.76,77.27" fill="#cc3328"/><g transform="rotate(-6 75 58)"><polygon points="8,47 142,47 134,58 142,69 8,69 16,58" fill="none" stroke="#cc3328" stroke-width="3.2" stroke-linejoin="miter"/><text x="75" y="58.8" text-anchor="middle" dominant-baseline="middle" fill="#cc3328" font-family="Arial Black,Arial,sans-serif" font-size="24" font-weight="900" letter-spacing="2">FAIL</text></g></g></svg>`
+};
+const DOM_ICONS = {
+cool: `<svg viewBox="0 0 24 24"><path d="M12 12 L20 7.5 L20 16.5 L12 21 Z" fill="#9ccbe9"/><path d="M12 12 L4 7.5 L4 16.5 L12 21 Z" fill="#c2e2f6"/><path d="M12 3 L20 7.5 L12 12 L4 7.5 Z" fill="#e6f5fd"/><path d="M12 4.7 L17.3 7.6 L12 10.3 L6.7 7.6 Z" fill="#ffffff" opacity="0.5"/><path d="M12 3 L20 7.5 L20 16.5 L12 21 L4 16.5 L4 7.5 Z" fill="none" stroke="#79b4da" stroke-width="1" stroke-linejoin="round"/><path d="M12 12 L12 21 M12 12 L4 7.5 M12 12 L20 7.5" stroke="#79b4da" stroke-width="0.8" stroke-linejoin="round" fill="none"/></svg>`,
+hot: `<svg viewBox="0 0 24 24" fill="#e0503a"><path d="M12 22c-3.3 0-6-2.6-6-5.9 0-2.1 1.2-4 2.6-5.6.3 1 .9 1.8 1.7 2.2-.4-2.7.9-5.3 3-6.7-.3 1.7.5 3.3 1.9 4.4 1.2.9 2.8 2.6 2.8 5.7 0 3.3-2.7 5.9-6 5.9z"/></svg>`
+};
+
+// ---- helpers ----
+const $ = id => document.getElementById(id);
+const money = n => isNaN(n) ? '$0' : '$' + Math.round(n).toLocaleString('en-US');
+const money1 = n => isNaN(n) ? '$0.00' : '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const round1k = n => Math.round(n/1000)*1000;
+
+// ---- deal state (populated from Zillow pull) ----
+let DEAL = {address:'',zip:'',neighborhood:'',listing_status:'',report_date:'',beds:'',baths:'',sqft:0,year_built:'',style:'',lot_size:'',asking_price:'',dom:'',list_price:0,comps:[],notes:[],condition_adj_pct:-10,adj_label:'',projected_arv:0,sources_line:''};
+
+// Load a Zillow-pulled deal. Optional purchase_override / rehab_override fill the input fields.
+window.loadDeal = function(obj){
+  Object.assign(DEAL, obj);
+  if(obj.address!=null) $('address').value = obj.address;
+  if(obj.purchase_override!=null) $('purchase_price').value = obj.purchase_override;
+  if(obj.rehab_override!=null) $('rehab_budget').value = obj.rehab_override;
+  if(obj.down_pct!=null) $('down_pct').value = (+obj.down_pct*100);
+  if(obj.interest_rate!=null) $('interest_rate').value = (+obj.interest_rate*100);
+  if(obj.loan_term_years!=null) $('loan_term').value = obj.loan_term_years;
+  if(obj.comps!=null){ $('compRows').innerHTML=''; obj.comps.forEach(addCompRow); }
+  $('purchase_price').placeholder = DEAL.list_price ? ('Zillow list: $'+Math.round(DEAL.list_price).toLocaleString()) : 'auto from Zillow';
+  render();
+};
+
+// ===== Export / Import a deal as a reloadable file =====
+function exportDeal(){
+  // Capture current panel overrides into the DEAL so the file reloads exactly as seen.
+  const num = id => { const v = parseFloat(($(id)&&$(id).value)||''); return isNaN(v)?null:v; };
+  const snap = Object.assign({}, DEAL);
+  if($('address')) snap.address = $('address').value || snap.address;
+  if(num('purchase_price')!=null) snap.purchase_override = num('purchase_price');
+  if(num('rehab_budget')!=null)   snap.rehab_override   = num('rehab_budget');
+  if(num('down_pct')!=null)       snap.down_pct       = num('down_pct')/100;
+  if(num('interest_rate')!=null)  snap.interest_rate  = num('interest_rate')/100;
+  if(num('loan_term')!=null)      snap.loan_term_years= num('loan_term');
+  snap._saved = new Date().toISOString();
+  const name = (String(snap.address||'Deal').split(',')[0].trim().replace(/[\/:*?"<>|]+/g,'')) || 'Deal';
+  const blob = new Blob([JSON.stringify(snap,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name + '.deal.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function importDealFile(input){
+  const f = input.files && input.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try { window.loadDeal(JSON.parse(e.target.result)); }
+    catch(err){ alert('Could not read that deal file — is it a .deal.json export?'); }
+    input.value = '';
+  };
+  r.readAsText(f);
+}
+
+const dash = v => (v && (''+v).trim()) ? v : '—';
+const normAddr = s => (s||'').toLowerCase().replace(/[\s,.\-]+/g,' ').trim();
+
+// Address typed doesn't match the property whose comps are loaded → can't reuse stale comps.
+function compsMatchAddress(){
+  const typed = normAddr($('address').value);
+  if(!typed) return true;
+  return typed === normAddr(DEAL.address);
+}
+
+// ---- manual comp rows (sidebar) ----
+function addCompRow(c){
+  c = c || {};
+  const row = document.createElement('div');
+  row.className = 'comprow';
+  row.dataset.deedVerified = c.deed_verified ? '1' : '';
+  row.dataset.deed = c.deed || '';
+  row.dataset.status = c.status || '';
+  row.dataset.calcNote = c.calc_note || '';
+  const cls = c.class || 'strong';
+  row.innerHTML = `
+    <input class="c-addr"  placeholder="Address"  value="${c.addr!=null?(''+c.addr).replace(/"/g,'&quot;'):''}">
+    <input class="c-sold"  placeholder="m/d/yy"   value="${c.sold!=null?c.sold:''}">
+    <input class="c-price" type="number" placeholder="$"   value="${c.price!=null?c.price:''}">
+    <input class="c-sqft"  type="number" placeholder="sqft" value="${c.sqft!=null?c.sqft:''}">
+    <input class="c-bd"    placeholder="bd" value="${c.bd!=null?c.bd:''}">
+    <input class="c-ba"    placeholder="ba" value="${c.ba!=null?c.ba:''}">
+    <select class="c-class">
+      <option value="strong"${cls==='strong'?' selected':''}>Strong</option>
+      <option value="note"${cls==='note'?' selected':''}>Note</option>
+      <option value="excl"${cls==='excl'?' selected':''}>Exclude</option>
+    </select>
+    <button type="button" class="cx" title="Remove" onclick="this.parentNode.remove();render();">&times;</button>`;
+  $('compRows').appendChild(row);
+}
+function readManualComps(){
+  return [...document.querySelectorAll('#compRows .comprow')].map(r=>{
+    const v = s => r.querySelector(s).value.trim();
+    const o = {
+      addr:v('.c-addr'), sold:v('.c-sold'),
+      price:parseFloat(v('.c-price'))||0, sqft:parseFloat(v('.c-sqft'))||0,
+      bd:v('.c-bd'), ba:v('.c-ba'), class:r.querySelector('.c-class').value
+    };
+    if(r.dataset.deedVerified) o.deed_verified = true;
+    if(r.dataset.deed) o.deed = r.dataset.deed;
+    if(r.dataset.status) o.status = r.dataset.status;
+    if(r.dataset.calcNote) o.calc_note = r.dataset.calcNote;
+    return o;
+  }).filter(c => c.addr || c.price || c.sqft);
+}
+
+// ---- core math + report ----
+function render(){
+  const sqft = parseFloat(DEAL.sqft)||0;
+  const pf = parseFloat($('purchase_price').value);
+  const autoPrice = !(!isNaN(pf) && pf>0);
+  const purchase = autoPrice ? (parseFloat(DEAL.list_price)||0) : pf;
+  const rehab = parseFloat($('rehab_budget').value)||0;
+  const adjPct = parseFloat(DEAL.condition_adj_pct)||0;
+  const comps = readManualComps();
+  const notes = DEAL.notes||[];
+  const address = $('address').value || DEAL.address;
+
+  // new address typed that doesn't match the loaded comps — need a fresh Zillow pull
+  if(!compsMatchAddress() && comps.length>0){
+    $('report').innerHTML = `
+    <div class="hdr">
+      <div class="eyebrow">F Mac Capital &nbsp;&bull;&nbsp; After-Repair Value Report</div>
+      <h1>${dash(address)}</h1>
+      <div class="sub">New address entered &mdash; comps for this property haven't been pulled yet.</div>
+    </div>
+    <div class="rbody"><p style="color:#5e6a82;font-size:14px;margin-top:8px;line-height:1.6;">
+      Comps and property facts must come from Zillow. Send me this address in chat
+      ${ (purchase>0||rehab>0) ? `(with purchase ${money(purchase)}${rehab>0?` and rehab ${money(rehab)}`:''})` : '' }
+      and I'll pull Zillow and generate the full report here.<br><br>
+      To re-run an <em>already-loaded</em> property with different numbers, keep its address and just change purchase or rehab.
+    </p></div>`;
+    return;
+  }
+
+  // empty state — nothing pulled yet
+  if(!sqft && comps.length===0){
+    $('report').innerHTML = `
+    <div class="hdr">
+      <div class="eyebrow">F Mac Capital &nbsp;&bull;&nbsp; After-Repair Value Report</div>
+      <h1>${dash(address)==='—'?'Awaiting address':dash(address)}</h1>
+      <div class="sub">Enter a property address on the left &mdash; the subject and comps are pulled from Redfin + Zillow, verified against county deeds, and the report fills in here.</div>
+    </div>
+    <div class="rbody"><p style="color:#5e6a82;font-size:14px;margin-top:8px;">No Zillow data loaded yet for this property.</p></div>`;
+    return;
+  }
+
+  const included = comps.filter(c => (c.class==='strong'||c.class==='note') && +c.price>0 && +c.sqft>0);
+  const psfList = included.map(c => (+c.price)/(+c.sqft));
+  const avgPsf = psfList.length ? psfList.reduce((a,b)=>a+b,0)/psfList.length : 0;
+  const baseArv = avgPsf * sqft;
+  const adjVal = baseArv * (adjPct/100);
+  // --- multi-source ARV check (Redfin primary, Zillow cross-check, County third leg) ---
+  const rf = parseFloat(DEAL.redfin_arv);
+  const zl = parseFloat(DEAL.zillow_arv);
+  const haveRf = !isNaN(rf) && rf>0;
+  const haveZl = !isNaN(zl) && zl>0;
+  const haveBoth = haveRf && haveZl;
+  const srcSpread = haveBoth ? Math.abs(rf-zl) : null;
+  const sourcesAgree = haveBoth && srcSpread <= 10000;     // 🟢 ≤ $10K  /  🔴 > $10K
+  const light = !haveBoth ? '' : (sourcesAgree ? '🟢' : '🔴');
+  let srcArv = null, srcBasis = '';
+  if(haveBoth){
+    srcArv = sourcesAgree ? rf : Math.min(rf,zl);          // agree → Redfin; diverge → conservative
+    srcBasis = sourcesAgree ? 'Redfin (sources agree ≤$10K)' : 'Lower of two (sources diverge >$10K)';
+  } else if(haveRf){ srcArv = rf; srcBasis = 'Redfin (only source)'; }
+  else if(haveZl){ srcArv = zl; srcBasis = 'Zillow (only source)'; }
+
+  // County third leg + gold tri-verified badge
+  const cv = parseFloat(DEAL.county_appraised);
+  const countyPulled = !!DEAL.county_pulled && !isNaN(cv) && cv>0;
+  const countyAligns = countyPulled && srcArv && Math.abs(cv - srcArv) <= 0.15*srcArv; // 15% tolerance
+  // Deed verification: a comp is verified when its Redfin/Zillow sale matches the county deed record.
+  // CERTIFIED = every included comp's Redfin + Zillow sale is confirmed by courthouse records.
+  const includedVerified = included.length>0 && included.every(c => !!c.deed_verified);
+  const goldVerified = includedVerified;
+
+  const override = parseFloat(DEAL.projected_arv);
+  const projArv = srcArv ? round1k(srcArv)
+                : (!isNaN(override) && override>0 ? override : round1k(baseArv + adjVal));
+
+  const total = purchase + rehab;
+  const spread = projArv - total;
+  const arv70 = projArv * 0.70;
+  const maxAllowed = arv70 - rehab;
+  const pass = purchase>0 && purchase <= maxAllowed;
+
+  let seal = SEALS.yellow;
+  if(pass && spread >= 50000) seal = SEALS.green;
+  else if(!pass && spread < 50000) seal = SEALS.red;
+
+  const domRaw = (DEAL.dom||'').trim();
+  const domNum = parseInt(domRaw,10);
+  const offMarket = /off/i.test(domRaw) || isNaN(domNum);
+  const cool = offMarket || domNum < 45;
+  const domClass = cool ? 'dom-cool' : 'dom-hot';
+  const domIcon = cool ? DOM_ICONS.cool : DOM_ICONS.hot;
+
+  // Rental comp — zip + bedroom based (remodeled / Section 8 basis). Refined later.
+  const rzip = (DEAL.zip||'').trim();
+  const rentHigh = (rzip==='36116' || rzip==='36117');
+  const subjBeds = parseInt(DEAL.beds,10);
+  const monthlyRent = subjBeds>=4 ? (rentHigh?1800:1400) : (rentHigh?1400:1200);
+  const purchDate = DEAL.purchase_date || DEAL.report_date || '—';
+
+  // Mortgage projection — inputs (panel) override DEAL data override defaults (20% down, 7%, 30yr).
+  const downIn = parseFloat($('down_pct').value);
+  const rateIn = parseFloat($('interest_rate').value);
+  const termIn = parseFloat($('loan_term').value);
+  const downPct = !isNaN(downIn) ? downIn/100 : (DEAL.down_pct != null ? +DEAL.down_pct : 0.20);
+  const annRate = !isNaN(rateIn) ? rateIn/100 : (DEAL.interest_rate != null ? +DEAL.interest_rate : 0.07);
+  const termYrs = !isNaN(termIn) ? termIn : (DEAL.loan_term_years != null ? +DEAL.loan_term_years : 30);
+  const downAmt = Math.round(purchase * downPct);
+  const financed = purchase - downAmt;
+  const mRate = annRate / 12;
+  const nPmts = termYrs * 12;
+  const monthlyPI = (financed > 0)
+    ? (mRate > 0
+        ? financed * (mRate * Math.pow(1 + mRate, nPmts)) / (Math.pow(1 + mRate, nPmts) - 1)
+        : financed / nPmts)
+    : 0;
+  const monthlyPIr = Math.round(monthlyPI);
+  // Insurance rule of thumb: $100/mo per $100,000 of insured value (= purchase/1000).
+  const monthlyInsurance = Math.round(purchase / 1000);
+  // Property tax — pulled from county PAYMENT INFO (annual), divided by 12. Null until verified.
+  const annualTax = (DEAL.annual_tax != null && DEAL.annual_tax !== '') ? +DEAL.annual_tax : null;
+  const monthlyTax = (annualTax != null) ? Math.round(annualTax / 12) : null;
+  // Full monthly carry (PITI): principal+interest + insurance + tax.
+  const monthlyPITI = monthlyPIr + monthlyInsurance + (monthlyTax || 0);
+  const netCashFlow = monthlyRent - monthlyPITI;
+
+  const compRowsHtml = comps.map(c => {
+    const cls = c.class==='strong'?'comp-strong':c.class==='note'?'comp-note':'comp-excl';
+    const psf = (+c.price>0 && +c.sqft>0) ? money1((+c.price)/(+c.sqft)) : '—';
+    const statusTxt = c.class==='excl' ? (c.status||'Excluded') + (c.calc_note?` — ${c.calc_note}`:'')
+                    : c.class==='note' ? (c.status||'Sold') + (c.calc_note?` — ${c.calc_note}`:'')
+                    : (c.status||'Sold');
+    const vchk = c.deed_verified ? ` <span class="vchk" title="Sale matches county deed${c.deed?' '+c.deed:''}">✓ deed</span>` : '';
+    const ctag = c.county_override ? ` <span class="ctag" title="Price corrected to the county-recorded sale (courthouse wins over Zillow/Redfin)">county</span>` : '';
+    return `<tr class="${cls}">
+      <td>${c.addr||'—'}${vchk}</td><td>${c.sold||'—'}</td><td>${c.price?money(+c.price):'—'}${ctag}</td>
+      <td>${c.sqft?(+c.sqft).toLocaleString():'—'}</td><td>${psf}</td>
+      <td>${(c.bd||'?')} / ${(c.ba||'?')}</td><td>${statusTxt}</td></tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;color:#888;">No comps loaded</td></tr>`;
+
+  const adjLabel = DEAL.adj_label || `${adjPct>=0?'+':''}${adjPct}% condition adjustment`;
+  const adjSign = adjVal>=0?'+':'−';
+
+  let ruleBody;
+  if(pass){
+    ruleBody = `<ul><li>Purchase of ${money(purchase)} is at or under the ${money(maxAllowed)} max allowed.</li>
+      <li>Built-in equity / spread of <strong>${money(spread)}</strong> at projected ARV.</li></ul>`;
+  } else {
+    const gap = purchase - maxAllowed;
+    const arvNeeded = round1k((purchase + rehab)/0.70);
+    const rehabMax = arv70 - purchase;
+    ruleBody = `<ul>
+      <li>Purchase exceeds max allowed by <strong>${money(gap)}</strong>.</li>
+      <li>To pass at this ARV/rehab, buy at or under <strong>${money(maxAllowed)}</strong>.</li>
+      <li>Or hold rehab to <strong>${money(rehabMax)}</strong>, or get ARV up to <strong>${money(arvNeeded)}</strong>.</li>
+    </ul>`;
+  }
+
+  const notesHtml = notes.filter(n=>n.trim()).map(n=>`<li>${n}</li>`).join('')
+    || `<li>No market notes loaded.</li>`;
+
+  $('report').innerHTML = `
+  <div class="hdr">
+    <div class="seal">${seal}</div>
+    <div class="eyebrow">F Mac Capital &nbsp;&bull;&nbsp; After-Repair Value Report</div>
+    <h1>${dash(address)}</h1>
+    <div class="sub">Montgomery, AL ${dash(DEAL.zip)} &nbsp;&bull;&nbsp; ${dash(DEAL.neighborhood)} &nbsp;&bull;&nbsp; ${dash(DEAL.listing_status)} &nbsp;&bull;&nbsp; ${dash(DEAL.report_date)}</div>
+    <div class="certrow">${goldVerified?'<span class="goldbadge" title="Every comp confirmed against Montgomery County courthouse records">★ CERTIFIED</span>':'<span class="unverbadge" title="Comps not yet confirmed against Montgomery County courthouse records">⚠ UNVERIFIED</span>'}</div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">Purchase<br>Price${autoPrice?' (Zillow)':''}</div><div class="val">${money(purchase)}</div></div>
+      <div class="stat"><div class="lbl">Rehab Budget<br>Expense</div><div class="val">${money(rehab)}</div></div>
+      <div class="stat"><div class="lbl">Total<br>Investment</div><div class="val">${money(total)}</div></div>
+      <div class="stat"><div class="lbl">Projected<br>ARV</div><div class="val">${money(projArv)}</div></div>
+    </div>
+  </div>
+  <div class="rbody">
+    <h2>Subject Property</h2>
+    <div class="subj">
+      <div class="cell"><div class="k">Beds</div><div class="v">${dash(DEAL.beds)}</div></div>
+      <div class="cell"><div class="k">Baths</div><div class="v">${dash(DEAL.baths)}</div></div>
+      <div class="cell"><div class="k">Sq Ft</div><div class="v">${sqft?sqft.toLocaleString():'—'}</div></div>
+      <div class="cell"><div class="k">Year Built</div><div class="v">${dash(DEAL.year_built)}</div></div>
+      <div class="cell"><div class="k">Style</div><div class="v">${dash(DEAL.style)}</div></div>
+      <div class="cell"><div class="k">Lot Size</div><div class="v">${dash(DEAL.lot_size)}</div></div>
+      <div class="cell"><div class="k">Asking Price</div><div class="v">${dash(DEAL.asking_price)}</div></div>
+      <div class="cell"><div class="k">Days on Mkt</div><div class="v"><span class="dombox ${domClass}">${dash(domRaw)} ${domIcon}</span></div></div>
+    </div>
+
+    ${ DEAL.last_sale_price ? `
+    <div class="vsale">
+      <span class="vchk">✓ deed</span>
+      Last recorded sale: <strong>${money(+DEAL.last_sale_price)}</strong>
+      on <strong>${dash(DEAL.last_sale_date)}</strong>${DEAL.last_sale_deed?` &middot; deed ${DEAL.last_sale_deed}`:''}
+      <span class="vsrc">(Montgomery County — verified)</span>
+    </div>` : '' }
+
+    <h2>Rental Comp &amp; Cash Flow</h2>
+    <div class="rentalbox">
+      <div class="rentalhead">
+        <div>Projected rent &mdash; <strong>remodeled / Section&nbsp;8</strong> basis (ZIP ${dash(rzip)}, ${isNaN(subjBeds)?'?':subjBeds} bd)</div>
+        <div class="rentbig">${money(monthlyRent)}<span>/mo</span></div>
+      </div>
+      <table>
+        <thead><tr><th>Address</th><th>Date of Purchase</th><th>Price</th><th>Sq Ft</th><th>$/Sq Ft</th><th>Bd / Ba</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="comp-strong">
+            <td>${dash(address)}</td>
+            <td>${purchDate}</td>
+            <td>${money(purchase)}</td>
+            <td>${sqft?sqft.toLocaleString():'—'}</td>
+            <td>${sqft>0?money1(purchase/sqft):'—'}</td>
+            <td>${dash(DEAL.beds)} / ${dash(DEAL.baths)}</td>
+            <td>Remodeled Section 8</td>
+          </tr>
+        </tbody>
+      </table>
+      <table style="margin-top:12px;">
+        <thead><tr><th>Address</th><th>Purchase Price</th><th>${Math.round(downPct*100)}% Down</th><th>Amount Financed</th><th>Interest Rate</th><th>Insurance /mo</th><th>Tax /mo</th><th>Monthly Payment</th></tr></thead>
+        <tbody>
+          <tr class="comp-note">
+            <td>${dash(address)}</td>
+            <td>${money(purchase)}</td>
+            <td>${money(downAmt)}</td>
+            <td>${money(financed)}</td>
+            <td>${(annRate*100).toFixed(annRate*100%1?2:0)}%</td>
+            <td>${money(monthlyInsurance)}</td>
+            <td>${monthlyTax!=null?money(monthlyTax):'<span style="color:#c0392b;">pending</span>'}</td>
+            <td>${money(monthlyPITI)}/mo</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="rentalhead" style="margin-top:12px;margin-bottom:0;border-top:1px solid var(--soft-blue-line);padding-top:12px;">
+        <div>Estimated monthly cash flow &mdash; rent ${money(monthlyRent)} &minus; monthly payment ${money(monthlyPITI)}</div>
+        <div class="rentbig" style="color:${netCashFlow>=0?'#1a7f37':'#c0392b'};">${netCashFlow>=0?'+':'−'}${money(Math.abs(netCashFlow))}<span>/mo</span></div>
+      </div>
+    </div>
+
+    <h2>Comparable Sales &mdash; Last 5 Months</h2>
+    <table>
+      <thead><tr><th>Address</th><th>Sold</th><th>Price</th><th>Sq Ft</th><th>$/Sq Ft</th><th>Bd / Ba</th><th>Status</th></tr></thead>
+      <tbody>${compRowsHtml}</tbody>
+    </table>
+
+    ${ (haveRf||haveZl) ? `
+    <h2>ARV Source Check</h2>
+    <div class="srcgrid">
+      <div class="scell"><div class="k">Redfin ARV</div><div class="v">${haveRf?money(rf):'—'}</div></div>
+      <div class="scell"><div class="k">Zillow ARV</div><div class="v">${haveZl?money(zl):'—'}</div></div>
+      <div class="scell"><div class="k">Spread</div><div class="v">${haveBoth?(money(srcSpread)+' '+light):'—'}</div></div>
+      <div class="scell"><div class="k">County Appraised</div><div class="v">${countyPulled?money(cv):'n/a'}</div></div>
+      <div class="scell hero"><div class="k">ARV Used</div><div class="v">${money(projArv)}</div></div>
+    </div>
+    <p class="srcnote">Basis: ${srcBasis}.${
+        haveBoth ? (sourcesAgree
+          ? ' Redfin and Zillow agree within $10K.'
+          : ' Sources diverge by more than $10K — using the lower, conservative figure.') : ''
+      }${
+        goldVerified ? ' <strong>★ Certified</strong> — every comp\'s Redfin + Zillow sale is confirmed by Montgomery County courthouse records.'
+        : ' Comps not yet confirmed against county courthouse records — certified badge pending.'
+      }</p>` : '' }
+
+    <h2>ARV Calculation</h2>
+    <div class="calc">
+      <div class="calc-row"><span>Average $/sqft (included comps)</span><span>${money1(avgPsf)} / sqft</span></div>
+      <div class="calc-row"><span>Base ARV &mdash; ${money1(avgPsf)} &times; ${sqft?sqft.toLocaleString():0} sqft</span><span>${money(baseArv)}</span></div>
+      <div class="calc-row adj"><span>${adjLabel}</span><span>${adjSign}${money(Math.abs(adjVal))}</span></div>
+      <div class="calc-row total"><span>Projected ARV (rounded)</span><span>${money(projArv)}</span></div>
+    </div>
+
+    <h2>Investment Summary</h2>
+    <div class="cards">
+      <div class="card cost">
+        <h3>Cost Breakdown</h3>
+        <div class="line"><span>Purchase Price${autoPrice?' (Zillow list)':''}</span><span>${money(purchase)}</span></div>
+        <div class="line"><span>Rehab Budget</span><span>${money(rehab)}</span></div>
+        <div class="line big"><span>Total Investment</span><span>${money(total)}</span></div>
+      </div>
+      <div class="card ret">
+        <h3>Return Snapshot</h3>
+        <div class="line"><span>Projected ARV</span><span>${money(projArv)}</span></div>
+        <div class="line"><span>Total Investment</span><span>${money(total)}</span></div>
+        <div class="line big"><span>Equity / Spread</span><span class="${spread>=0?'pos':'neg'}">${money(spread)}</span></div>
+      </div>
+    </div>
+
+    <h2>70% Rule Check</h2>
+    <div class="rule3">
+      <div class="rb"><div class="k">ARV &times; 70%</div><div class="v">${money(arv70)}</div></div>
+      <div class="rb"><div class="k">Max Allowed Purchase</div><div class="v">${money(maxAllowed)}</div></div>
+      <div class="rb"><div class="k">Your Purchase</div><div class="v">${money(purchase)}</div></div>
+    </div>
+    <div class="callout ${pass?'pass':'fail'}">
+      <div class="head">${pass?'✓ PASS':'✕ FAIL'} &mdash; 70% Rule</div>
+      <div class="subh">${pass?'Deal clears the 70% screen.':'Deal does not clear the 70% screen as a flip.'}</div>
+      ${ruleBody}
+    </div>
+
+    <h2>Data Quality &amp; Market Notes</h2>
+    <div class="notes">
+      <ul>${notesHtml}</ul>
+      <div class="sources">${dash(DEAL.sources_line)}</div>
+    </div>
+
+    <div class="disclaimer">
+      This is an analytical tool for investment screening, <strong>not a formal appraisal</strong>. ARV is intentionally conservative; a licensed appraisal may come in higher. Verify comps and obtain a licensed appraisal before closing.
+    </div>
+  </div>`;
+}
+
+// Generate button: same property + new numbers → recompute; new address → prompt for Zillow pull
+window.generateReport = function(){ render(); };
+
+// live binding on the three inputs
+['address','purchase_price','rehab_budget'].forEach(id => $(id).addEventListener('input', render));
+
+// init
+render();
+
+// ===== LOADED DEAL (replace this block each new deal) =====
+window.loadDeal({
+  address:"1807 Austin St, Montgomery, AL 36110", zip:"36110",
+  neighborhood:"Highland Gardens", listing_status:"For Sale (investment package)", report_date:"June 27, 2026",
+  beds:4, baths:2, sqft:1236, year_built:"1957", style:"Brick — Single-Family",
+  lot_size:"0.5 ac", asking_price:"$80,000", dom:"For sale", list_price:80000,
+  purchase_override:80000, rehab_override:0,
+  county_pulled:false, condition_adj_pct:0,
+  annual_tax:355.32, // Montgomery County PAYMENT INFO — tax yr 2025, paid 1/2/2026 (LERETA)
+  sources_line:"Subject & comps pulled from Homes.com on 6/29/26 (new single-source pipeline; Zillow/Redfin retired). Comps = the Similar Homes set at the bottom of the listing — first 3 from page 1, first 2 from page 2 — pending courthouse deed-verification + tax pull. Subject tax $355.32/yr is county-verified.",
+  notes:[
+    "Subject: 4bd/2ba, 1,236 sqft brick, built 1957, Highland Gardens / North Montgomery (36110) — Section-8-occupied investment-package listing; assumed standard livable, rehab $0. (Homes.com)",
+    "Comps sourced from Homes.com 'Similar Homes': 3 from page 1 + 2 from page 1→2. These are ACTIVE/asking prices, not recorded sales — to be deed-verified at the Montgomery County courthouse and corrected to the recorded sale where they differ.",
+    "Comps 4 & 5 (page-2 picks) need visual confirmation — Homes.com froze before the page-2 layout could be screenshotted; loaded as best-guess and editable in the sidebar.",
+    "ARV = avg comp $/sqft × subject 1,236 sqft (strong/note comps only)."
+  ],
+  comps:[
+    {addr:"2331 Glendale Ave", sold:"", price:79900, sqft:1152, bd:2, ba:1,   class:"strong", status:"Homes.com (active)"},
+    {addr:"2440 Highland Ave", sold:"", price:95977, sqft:1500, bd:3, ba:2,   class:"strong", status:"Homes.com (active)"},
+    {addr:"139 Simpson St",    sold:"", price:69900, sqft:992,  bd:3, ba:1,   class:"strong", status:"Homes.com (active)"},
+    {addr:"1618 Midway St",    sold:"", price:86000, sqft:990,  bd:3, ba:1,   class:"strong", status:"Homes.com (active) — page-2 pick, verify"},
+    {addr:"1750 Yarbrough St", sold:"", price:79900, sqft:1092, bd:3, ba:1.5, class:"strong", status:"Homes.com (active) — page-2 pick, verify"}
+  ]
+});
+// ===== END LOADED DEAL =====
+</script>
+</body>
+</html>
