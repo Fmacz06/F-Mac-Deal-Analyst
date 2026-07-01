@@ -37,6 +37,8 @@
   .btn-ghost{background:#eef2f8;color:var(--navy);border:1px solid #d4deeb;}
   .btn-mini{padding:4px 8px;font-size:11px;font-weight:700;border-radius:6px;border:1px solid #d4deeb;background:#eef2f8;color:var(--navy);cursor:pointer;}
   .btn-row{display:flex;gap:8px;margin-top:14px;}
+  .wkbtns{display:flex;gap:8px;margin-top:16px;}
+  .wkbtns .btn{flex:1;text-align:center;}
   /* comp editor */
   .comp{border:1px solid #e1e7ef;border-radius:8px;padding:10px;margin-bottom:10px;background:#f8fafc;position:relative;}
   .comp .del{position:absolute;top:7px;right:8px;}
@@ -310,8 +312,23 @@ function savePDF(){
   btns.forEach(b=>b.disabled=true);
   const wasNight = document.body.classList.contains('night');
   document.body.classList.remove('night');      // always export the clean white report
-  html2canvas(page, {scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false,
-                      windowWidth:page.scrollWidth, scrollX:0, scrollY:0})
+  // Clone the report into an off-screen container at its natural width so html2canvas
+  // captures the FULL width (no left-side clipping from the app's flex layout / reflow),
+  // and drop the on-screen action buttons (.no-print) from the exported page.
+  const w = Math.ceil(page.getBoundingClientRect().width) || 850;
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;top:0;left:0;z-index:-1;background:#fff;width:'+w+'px;overflow:hidden;';
+  const clone = page.cloneNode(true);
+  clone.style.margin = '0';
+  clone.style.maxWidth = 'none';
+  clone.style.width = w+'px';
+  clone.style.boxShadow = 'none';
+  clone.querySelectorAll('.no-print').forEach(el=>el.remove());
+  wrap.appendChild(clone);
+  document.body.appendChild(wrap);
+  const cleanup = ()=>{ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(wasNight) document.body.classList.add('night'); btns.forEach(b=>b.disabled=false); };
+  html2canvas(clone, {scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false,
+                      windowWidth:w, width:w, scrollX:0, scrollY:0})
     .then(canvas=>{
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p','pt','letter');
@@ -326,7 +343,7 @@ function savePDF(){
       pdf.save(dealName()+'.pdf');
     })
     .catch(()=>{ savePDFprint(); })
-    .finally(()=>{ if(wasNight) document.body.classList.add('night'); btns.forEach(b=>b.disabled=false); });
+    .finally(cleanup);
 }
 // ---- Seals (verbatim from F Mac stamps) ----
 const SEALS = {
@@ -849,6 +866,13 @@ function render(){
       <p class="srcnote" style="margin-top:10px;">Weighted blend &mdash; market/area 50% (${(marketAppr*100).toFixed(1)}%/yr), inflation baseline 30% (${(baselineAppr*100).toFixed(1)}%/yr), ${histAppr!=null?`property history 20% (${(histAppr*100).toFixed(1)}%/yr: ${money(lastSaleP)} in ${lastSaleY} &rarr; ARV over ${histYears} yr)`:'property history n/a (weight redistributed)'}. Inflation is baked into the baseline. Solid line = actual to today; dashed = projection.</p>
     </div>
 
+    <div class="wkbtns no-print">
+      <button class="btn btn-primary" onclick="openScopeOfWork()">Scope of Work</button>
+      <button class="btn btn-primary" onclick="">&nbsp;</button>
+      <button class="btn btn-primary" onclick="">&nbsp;</button>
+      <button class="btn btn-primary" onclick="">&nbsp;</button>
+    </div>
+
     <div class="disclaimer">
       This is an analytical tool for investment screening, <strong>not a formal appraisal</strong>. ARV is intentionally conservative; a licensed appraisal may come in higher. Verify comps and obtain a licensed appraisal before closing.
     </div>
@@ -857,6 +881,7 @@ function render(){
 
 // Generate button: same property + new numbers → recompute; new address → prompt for Zillow pull
 window.generateReport = function(){ render(); };
+window.openScopeOfWork = function(){ /* wired up next */ };
 
 // live binding — purchase, rehab AND mortgage inputs all recompute the whole report on every keystroke
 ['address','purchase_price','rehab_budget','down_pct','interest_rate','loan_term','market_appr','baseline_appr','ltv_pct'].forEach(id => $(id).addEventListener('input', render));
