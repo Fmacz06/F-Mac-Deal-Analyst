@@ -226,6 +226,15 @@
     </div>
 
     <div class="grp">
+      <div class="gt">Appreciation Inputs</div>
+      <label>Market / Area Appreciation (%/yr)</label>
+      <input id="market_appr" type="number" step="0.1" placeholder="4">
+      <label>Fixed Baseline (%/yr)</label>
+      <input id="baseline_appr" type="number" step="0.1" placeholder="4">
+      <p class="hint">The 10-Year Appreciation Chart blends three signals equally: this property's own history (last sale &rarr; ARV), the market/area rate, and this fixed baseline. Defaults 4% each. Edit and hit Generate Report.</p>
+    </div>
+
+    <div class="grp">
       <div class="gt">Comps (manual entry)</div>
       <div class="comphdr"><span>Address</span><span>Sold</span><span>Price</span><span>Sq Ft</span><span>Bd</span><span>Ba</span><span>Class</span><span></span></div>
       <div id="compRows"></div>
@@ -335,6 +344,8 @@ window.loadDeal = function(obj){
   if(obj.down_pct!=null) $('down_pct').value = (+obj.down_pct*100);
   if(obj.interest_rate!=null) $('interest_rate').value = (+obj.interest_rate*100);
   if(obj.loan_term_years!=null) $('loan_term').value = obj.loan_term_years;
+  if(obj.market_appr_rate!=null) $('market_appr').value = (+obj.market_appr_rate*100);
+  if(obj.baseline_appr_rate!=null) $('baseline_appr').value = (+obj.baseline_appr_rate*100);
   if(obj.comps!=null){ $('compRows').innerHTML=''; obj.comps.forEach(addCompRow); }
   $('purchase_price').placeholder = DEAL.list_price ? ('Zillow list: $'+Math.round(DEAL.list_price).toLocaleString()) : 'auto from Zillow';
   render();
@@ -550,6 +561,75 @@ function render(){
   const monthlyPITI = monthlyPIr + monthlyInsurance + (monthlyTax || 0);
   const netCashFlow = monthlyRent - monthlyPITI;
 
+  // ===== 10-Year Appreciation Chart =====
+  // Blend 3 signals EQUALLY (1/3 each): property's own history, market/area rate, fixed baseline.
+  const marketApprIn = parseFloat($('market_appr').value);
+  const baselineIn   = parseFloat($('baseline_appr').value);
+  const marketAppr   = !isNaN(marketApprIn) ? marketApprIn/100 : (DEAL.market_appr_rate!=null ? +DEAL.market_appr_rate : 0.04);
+  const baselineAppr = !isNaN(baselineIn)   ? baselineIn/100   : (DEAL.baseline_appr_rate!=null ? +DEAL.baseline_appr_rate : 0.04);
+  // Property's own history: annualized rate from last recorded sale → today's ARV.
+  const nowYear = new Date().getFullYear();
+  const lastSaleP = parseFloat(DEAL.last_sale_price)||0;
+  const lastSaleY = DEAL.last_sale_date ? parseInt((''+DEAL.last_sale_date).slice(0,4),10) : null;
+  let histAppr = null, histYears = 0;
+  if(lastSaleP>0 && lastSaleY && projArv>0 && nowYear>lastSaleY){
+    histYears = nowYear - lastSaleY;
+    histAppr = Math.pow(projArv/lastSaleP, 1/histYears) - 1;
+  }
+  // Equal blend across whichever signals exist (history may be missing).
+  const apprSignals = [marketAppr, baselineAppr];
+  if(histAppr!=null) apprSignals.unshift(histAppr);
+  const blendedAppr = apprSignals.reduce((a,b)=>a+b,0)/apprSignals.length;
+  // Projection from today's ARV forward.
+  const val5  = Math.round(projArv * Math.pow(1+blendedAppr, 5));
+  const val10 = Math.round(projArv * Math.pow(1+blendedAppr, 10));
+  // Chart series: historical anchor (last sale) → today (ARV) → +5 → +10.
+  const apprPts = [];
+  if(lastSaleP>0 && lastSaleY) apprPts.push({year:lastSaleY, val:lastSaleP, kind:'hist'});
+  apprPts.push({year:nowYear, val:Math.round(projArv), kind:'today'});
+  apprPts.push({year:nowYear+5,  val:val5,  kind:'proj'});
+  apprPts.push({year:nowYear+10, val:val10, kind:'proj'});
+
+  // Build inline SVG line chart (self-contained so it rasterizes into the PDF export).
+  const apprChartSvg = (() => {
+    const W=660, H=340, padL=70, padR=30, padT=24, padB=40;
+    const plotW=W-padL-padR, plotH=H-padT-padB;
+    const yrs = apprPts.map(p=>p.year), vals = apprPts.map(p=>p.val);
+    const minY=Math.min(...yrs), maxY=Math.max(...yrs);
+    const maxV=Math.max(...vals)*1.12 || 1;
+    const X = y => padL + (maxY===minY?0:(y-minY)/(maxY-minY))*plotW;
+    const Y = v => padT + plotH - (v/maxV)*plotH;
+    const fmtK = v => v>=1e6 ? '$'+(v/1e6).toFixed(1).replace(/\.0$/,'')+'m' : '$'+Math.round(v/1000)+'k';
+    // gridlines (4)
+    let grid='', ny=4;
+    for(let i=0;i<=ny;i++){ const gv=maxV*i/ny, gy=Y(gv);
+      grid+=`<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${W-padR}" y2="${gy.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`
+          + `<text x="${padL-8}" y="${(gy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#5e6a82">${fmtK(gv)}</text>`; }
+    // x ticks
+    let xt=''; apprPts.forEach(p=>{ xt+=`<text x="${X(p.year).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" font-size="11" fill="#5e6a82">${p.year}</text>`; });
+    // split solid (hist→today) vs dashed (today→proj)
+    const todayIdx = apprPts.findIndex(p=>p.kind==='today');
+    const solidPts = apprPts.slice(0, todayIdx+1);
+    const projPts  = apprPts.slice(todayIdx);
+    const path = pts => pts.map((p,i)=>`${i?'L':'M'}${X(p.year).toFixed(1)},${Y(p.val).toFixed(1)}`).join(' ');
+    const solidLine = solidPts.length>1 ? `<path d="${path(solidPts)}" fill="none" stroke="#2f6f9f" stroke-width="3.5"/>` : '';
+    const projLine  = `<path d="${path(projPts)}" fill="none" stroke="#e07b39" stroke-width="3.5" stroke-dasharray="7 5"/>`;
+    // dots + callouts
+    let dots='';
+    apprPts.forEach(p=>{ const c=p.kind==='proj'?'#e07b39':(p.kind==='today'?'#1f2d4d':'#2f6f9f');
+      dots+=`<circle cx="${X(p.year).toFixed(1)}" cy="${Y(p.val).toFixed(1)}" r="4.5" fill="${c}"/>`; });
+    // value labels on today / +5 / +10
+    let labels='';
+    [todayIdx, apprPts.length-2, apprPts.length-1].forEach(i=>{ const p=apprPts[i]; if(!p) return;
+      const c=p.kind==='proj'?'#e07b39':'#1f2d4d';
+      labels+=`<text x="${X(p.year).toFixed(1)}" y="${(Y(p.val)-12).toFixed(1)}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${c}">${money(p.val)}</text>`; });
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;margin:0 auto;font-family:inherit;">`
+      + grid + xt
+      + `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#94a3b8" stroke-width="1.5"/>`
+      + `<line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#94a3b8" stroke-width="1.5"/>`
+      + solidLine + projLine + dots + labels + `</svg>`;
+  })();
+
   const compRowsHtml = comps.map(c => {
     const cls = c.class==='strong'?'comp-strong':c.class==='note'?'comp-note':'comp-excl';
     const psf = (+c.price>0 && +c.sqft>0) ? money1((+c.price)/(+c.sqft)) : '—';
@@ -721,6 +801,21 @@ function render(){
       ${ruleBody}
     </div>
 
+    <h2>10-Year Appreciation Chart</h2>
+    <div class="rentalbox">
+      <div class="rentalhead">
+        <div>Projected equity growth &mdash; from today's ARV ${money(projArv)}, blended <strong>${(blendedAppr*100).toFixed(1)}%/yr</strong></div>
+        <div class="rentbig" style="color:#e07b39;">${money(val10)}<span> in 10 yr</span></div>
+      </div>
+      ${apprChartSvg}
+      <div class="rule3" style="margin-top:14px;">
+        <div class="rb"><div class="k">Blended Rate</div><div class="v">${(blendedAppr*100).toFixed(1)}%/yr</div></div>
+        <div class="rb"><div class="k">Value in 5 yr</div><div class="v">${money(val5)}</div></div>
+        <div class="rb"><div class="k">Value in 10 yr</div><div class="v">${money(val10)}</div></div>
+      </div>
+      <p class="srcnote" style="margin-top:10px;">Blend (equal 1/3 each): ${histAppr!=null?`property history ${(histAppr*100).toFixed(1)}%/yr (${money(lastSaleP)} in ${lastSaleY} &rarr; ARV over ${histYears} yr)`:'property history n/a'}, market/area ${(marketAppr*100).toFixed(1)}%/yr, fixed baseline ${(baselineAppr*100).toFixed(1)}%/yr. Solid line = actual to today; dashed = projection.</p>
+    </div>
+
     <h2>Data Quality &amp; Market Notes</h2>
     <div class="notes">
       <ul>${notesHtml}</ul>
@@ -737,7 +832,7 @@ function render(){
 window.generateReport = function(){ render(); };
 
 // live binding — purchase, rehab AND mortgage inputs all recompute the whole report on every keystroke
-['address','purchase_price','rehab_budget','down_pct','interest_rate','loan_term'].forEach(id => $(id).addEventListener('input', render));
+['address','purchase_price','rehab_budget','down_pct','interest_rate','loan_term','market_appr','baseline_appr'].forEach(id => $(id).addEventListener('input', render));
 
 // init
 render();
