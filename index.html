@@ -39,6 +39,36 @@
   .btn-row{display:flex;gap:8px;margin-top:14px;}
   .wkbtns{display:flex;gap:8px;margin-top:16px;}
   .wkbtns .btn{flex:1;text-align:center;padding:11px 14px;border:2px solid #e07b39;color:#fff;font-size:15px;-webkit-text-stroke:0.8px #e07b39;text-stroke:0.8px #e07b39;}
+  /* ---- Scope of Work modal ---- */
+  .modal{position:fixed;inset:0;background:rgba(15,20,30,.62);display:none;z-index:2000;overflow:auto;padding:34px 24px;}
+  .modal.open{display:flex;align-items:flex-start;justify-content:center;}
+  .modal-card{background:#fff;border-radius:14px;max-width:1040px;width:100%;padding:26px 30px 32px;box-shadow:0 18px 60px rgba(0,0,0,.4);}
+  .sow-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;}
+  .sow-title{font-size:22px;font-weight:800;color:var(--navy);}
+  .sow-sub{font-size:12.5px;color:var(--muted);margin-top:4px;max-width:640px;line-height:1.5;}
+  .sow-budgetbar{display:flex;gap:12px;margin:18px 0 16px;}
+  .sow-budgetbar .sbb{flex:1;background:#f4f7fb;border:1px solid #e1e7ef;border-radius:9px;padding:10px 14px;text-align:center;}
+  .sbb-k{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;}
+  .sbb-v{font-size:20px;font-weight:800;margin-top:3px;}
+  .sbb-v.over{color:var(--red-txt,#cc3328);}
+  .sow-entry{display:flex;gap:8px;margin-bottom:24px;}
+  .sow-entry input{flex:1;padding:9px 12px;border:1px solid #cfd8e6;border-radius:7px;font-size:13px;}
+  .sow-entry input[type=number]{flex:0 0 160px;}
+  .cyl-wrap{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap;justify-content:center;min-height:60px;}
+  .cyl-empty{color:var(--muted);font-size:13px;padding:30px 0;}
+  .cyl-col{display:flex;flex-direction:column;align-items:center;width:96px;position:relative;}
+  .cyl-amt{font-weight:800;font-size:14px;color:#3f6d92;margin-bottom:7px;}
+  .cyl{position:relative;width:74px;height:230px;border-radius:37px/19px;background:rgba(120,150,180,.10);border:1px solid #cfd8e6;}
+  .cyl .cap{position:absolute;top:-1px;left:-1px;right:-1px;height:20px;border-radius:50%;background:rgba(230,238,246,.7);border:1px solid #cfd8e6;z-index:3;}
+  .cyl .fill{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,#7ba7c9 0%,#5b8bb0 100%);border-radius:0 0 37px 37px/0 0 19px 19px;transition:height .35s ease;}
+  .cyl .fill .ftop{position:absolute;top:-9px;left:0;right:0;height:18px;border-radius:50%;background:#6f9fc6;}
+  .cyl-cat{font-size:12px;font-weight:700;color:var(--navy);margin-top:9px;text-align:center;line-height:1.25;}
+  .cyl-del{position:absolute;top:22px;right:-4px;width:20px;height:20px;border-radius:50%;border:none;background:#eef2f8;color:#888;font-size:12px;cursor:pointer;z-index:4;}
+  body.night .modal-card{background:#20242a;}
+  body.night .sow-title,body.night .cyl-cat{color:#e8edf3;}
+  body.night .sow-budgetbar .sbb{background:#2a2f37;border-color:#3a414b;}
+  body.night .sbb-v{color:#e8edf3;}
+  body.night .sow-entry input{background:#2a2f37;border-color:#3a414b;color:#e8edf3;}
   /* comp editor */
   .comp{border:1px solid #e1e7ef;border-radius:8px;padding:10px;margin-bottom:10px;background:#f8fafc;position:relative;}
   .comp .del{position:absolute;top:7px;right:8px;}
@@ -268,6 +298,33 @@
 
   <!-- ================= REPORT PREVIEW ================= -->
   <div class="preview"><div class="page" id="report"></div></div>
+</div>
+
+<!-- ================= SCOPE OF WORK MODAL ================= -->
+<div class="modal" id="sowModal">
+  <div class="modal-card">
+    <div class="sow-top">
+      <div>
+        <div class="sow-title">Scope of Work</div>
+        <div class="sow-sub">Break the rehab budget into work categories. Each column is a category &mdash; label at the bottom, budget at the top.</div>
+      </div>
+      <button class="btn btn-ghost" onclick="closeSOW()">✕ Close</button>
+    </div>
+
+    <div class="sow-budgetbar">
+      <div class="sbb"><div class="sbb-k">Rehab Budget</div><div class="sbb-v" id="sowBudget">$0</div></div>
+      <div class="sbb"><div class="sbb-k">Allocated</div><div class="sbb-v" id="sowAllocated">$0</div></div>
+      <div class="sbb"><div class="sbb-k">Remaining</div><div class="sbb-v" id="sowRemaining">$0</div></div>
+    </div>
+
+    <div class="sow-entry">
+      <input id="sowCat" type="text" placeholder="Category (e.g. Electrical)">
+      <input id="sowAmt" type="number" placeholder="Amount ($)">
+      <button class="btn btn-primary" onclick="addSowItem()">+ Add Item</button>
+    </div>
+
+    <div class="cyl-wrap" id="sowCyls"></div>
+  </div>
 </div>
 
 <script>
@@ -881,7 +938,56 @@ function render(){
 
 // Generate button: same property + new numbers → recompute; new address → prompt for Zillow pull
 window.generateReport = function(){ render(); };
-window.openScopeOfWork = function(){ /* wired up next */ };
+// ===== Scope of Work =====
+let sowItems = [];  // [{cat, amt}]
+window.openScopeOfWork = function(){ $('sowModal').classList.add('open'); renderSOW(); };
+window.closeSOW = function(){ $('sowModal').classList.remove('open'); };
+window.addSowItem = function(){
+  const cat = ($('sowCat').value || '').trim();
+  const amt = parseFloat($('sowAmt').value);
+  if(!cat || isNaN(amt) || amt <= 0){ return; }
+  sowItems.push({cat, amt});
+  $('sowCat').value = ''; $('sowAmt').value = '';
+  $('sowCat').focus();
+  renderSOW();
+};
+window.removeSowItem = function(i){ sowItems.splice(i,1); renderSOW(); };
+function sowBudget(){ return parseFloat($('rehab_budget').value) || (window.DEAL && DEAL.rehab_budget!=null ? +DEAL.rehab_budget : 0); }
+function renderSOW(){
+  const money = n => '$' + Math.round(n).toLocaleString();
+  const budget = sowBudget();
+  const allocated = sowItems.reduce((s,x)=>s+x.amt, 0);
+  const remaining = budget - allocated;
+  $('sowBudget').textContent = money(budget);
+  $('sowAllocated').textContent = money(allocated);
+  const rem = $('sowRemaining');
+  rem.textContent = money(remaining);
+  rem.classList.toggle('over', remaining < 0);
+  const cyls = $('sowCyls');
+  if(!sowItems.length){ cyls.innerHTML = '<div class="cyl-empty">No items yet &mdash; add a category and amount above.</div>'; return; }
+  // fill height = each item's share of the budget (falls back to largest item if no budget)
+  const scaleBase = budget > 0 ? budget : Math.max.apply(null, sowItems.map(x=>x.amt));
+  cyls.innerHTML = sowItems.map((x,i)=>{
+    const pct = Math.max(4, Math.min(100, (x.amt / (scaleBase||1)) * 100));
+    return `<div class="cyl-col">
+      <div class="cyl-amt">${money(x.amt)}</div>
+      <div class="cyl">
+        <button class="cyl-del" title="Remove" onclick="removeSowItem(${i})">✕</button>
+        <div class="cap"></div>
+        <div class="fill" style="height:${pct}%;"><div class="ftop"></div></div>
+      </div>
+      <div class="cyl-cat">${x.cat.replace(/</g,'&lt;')}</div>
+    </div>`;
+  }).join('');
+}
+// Enter key in the entry fields adds the item
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && $('sowModal').classList.contains('open') &&
+     (document.activeElement===$('sowCat') || document.activeElement===$('sowAmt'))){ addSowItem(); }
+  if(e.key==='Escape' && $('sowModal').classList.contains('open')){ closeSOW(); }
+});
+// Click on the dark backdrop closes
+$('sowModal').addEventListener('click', e=>{ if(e.target===$('sowModal')) closeSOW(); });
 
 // live binding — purchase, rehab AND mortgage inputs all recompute the whole report on every keystroke
 ['address','purchase_price','rehab_budget','down_pct','interest_rate','loan_term','market_appr','baseline_appr','ltv_pct'].forEach(id => $(id).addEventListener('input', render));
