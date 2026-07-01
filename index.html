@@ -731,8 +731,8 @@ function render(){
 // Generate button: same property + new numbers → recompute; new address → prompt for Zillow pull
 window.generateReport = function(){ render(); };
 
-// live binding on the three inputs
-['address','purchase_price','rehab_budget'].forEach(id => $(id).addEventListener('input', render));
+// live binding — purchase, rehab AND mortgage inputs all recompute the whole report on every keystroke
+['address','purchase_price','rehab_budget','down_pct','interest_rate','loan_term'].forEach(id => $(id).addEventListener('input', render));
 
 // init
 render();
