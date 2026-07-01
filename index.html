@@ -38,7 +38,7 @@
   .btn-mini{padding:4px 8px;font-size:11px;font-weight:700;border-radius:6px;border:1px solid #d4deeb;background:#eef2f8;color:var(--navy);cursor:pointer;}
   .btn-row{display:flex;gap:8px;margin-top:14px;}
   .wkbtns{display:flex;gap:8px;margin-top:16px;}
-  .wkbtns .btn{flex:1;text-align:center;padding:11px 14px;border:2px solid #e07b39;color:#e07b39;}
+  .wkbtns .btn{flex:1;text-align:center;padding:11px 14px;border:2px solid #e07b39;color:#fff;font-size:15px;-webkit-text-stroke:0.8px #e07b39;text-stroke:0.8px #e07b39;}
   /* comp editor */
   .comp{border:1px solid #e1e7ef;border-radius:8px;padding:10px;margin-bottom:10px;background:#f8fafc;position:relative;}
   .comp .del{position:absolute;top:7px;right:8px;}
@@ -868,9 +868,9 @@ function render(){
 
     <div class="wkbtns no-print">
       <button class="btn btn-primary" onclick="openScopeOfWork()">Scope of Work</button>
-      <button class="btn btn-primary" onclick="">&nbsp;</button>
-      <button class="btn btn-primary" onclick="">&nbsp;</button>
-      <button class="btn btn-primary" onclick="">&nbsp;</button>
+      <button id="mp1" class="btn btn-primary" onclick="">Empty</button>
+      <button id="mp2" class="btn btn-primary" onclick="">Empty</button>
+      <button id="mp3" class="btn btn-primary" onclick="">Empty</button>
     </div>
 
     <div class="disclaimer">
