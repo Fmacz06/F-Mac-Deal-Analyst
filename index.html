@@ -242,6 +242,8 @@
       <input id="market_appr" type="number" step="0.1" placeholder="4">
       <label>Inflation Baseline (%/yr)</label>
       <input id="baseline_appr" type="number" step="0.1" placeholder="3">
+      <label>Refinance LTV / 70% Rule (%)</label>
+      <input id="ltv_pct" type="number" step="1" placeholder="70">
       <p class="hint">The 10-Year Appreciation Chart blends three signals by weight &mdash; market/area 50%, inflation baseline 30%, this property's own history (last sale &rarr; ARV) 20%. Defaults: market 4%, inflation 3%. Edit and hit Generate Report.</p>
     </div>
 
@@ -357,6 +359,7 @@ window.loadDeal = function(obj){
   if(obj.loan_term_years!=null) $('loan_term').value = obj.loan_term_years;
   if(obj.market_appr_rate!=null) $('market_appr').value = (+obj.market_appr_rate*100);
   if(obj.baseline_appr_rate!=null) $('baseline_appr').value = (+obj.baseline_appr_rate*100);
+  if(obj.ltv_pct!=null) $('ltv_pct').value = (+obj.ltv_pct);
   if(obj.comps!=null){ $('compRows').innerHTML=''; obj.comps.forEach(addCompRow); }
   $('purchase_price').placeholder = DEAL.list_price ? ('Zillow list: $'+Math.round(DEAL.list_price).toLocaleString()) : 'auto from Zillow';
   render();
@@ -522,7 +525,10 @@ function render(){
 
   const total = purchase + rehab;
   const spread = projArv - total;
-  const arv70 = projArv * 0.70;
+  const ltvIn = parseFloat($('ltv_pct').value);
+  const ltvPct = (!isNaN(ltvIn) && ltvIn>0) ? ltvIn : (DEAL.ltv_pct!=null ? +DEAL.ltv_pct : 70);
+  const ltvRate = ltvPct/100;
+  const arv70 = projArv * ltvRate;
   const maxAllowed = arv70;               // max TOTAL investment (purchase + rehab) you can recoup
   const maxPurchase = arv70 - rehab;      // implied max purchase price after rehab
   const pass = total>0 && total <= maxAllowed;
@@ -668,7 +674,7 @@ function render(){
       <li>Built-in equity / spread of <strong>${money(spread)}</strong> at projected ARV &mdash; recoup full investment on a BRRRR refi.</li></ul>`;
   } else {
     const gap = total - maxAllowed;
-    const arvNeeded = round1k(total/0.70);
+    const arvNeeded = round1k(total/ltvRate);
     ruleBody = `<ul>
       <li>Total investment exceeds max allowed by <strong>${money(gap)}</strong>.</li>
       <li>To pass at this ARV, keep total (purchase + rehab) at or under <strong>${money(maxAllowed)}</strong> &mdash; i.e. buy at or under <strong>${money(maxPurchase)}</strong>.</li>
@@ -803,22 +809,22 @@ function render(){
       </div>
     </div>
 
-    <h2>70% Rule Check</h2>
+    <h2>${ltvPct}% Rule Check</h2>
     <div class="rule3">
-      <div class="rb"><div class="k">ARV &times; 70% (Max Investment)</div><div class="v">${money(maxAllowed)}</div></div>
+      <div class="rb"><div class="k">ARV &times; ${ltvPct}% (Max Investment)</div><div class="v">${money(maxAllowed)}</div></div>
       <div class="rb"><div class="k">Your Total Investment</div><div class="v">${money(total)}</div></div>
       <div class="rb"><div class="k">Purchase + Rehab</div><div class="v">${money(purchase)} + ${money(rehab)}</div></div>
     </div>
     <div class="callout ${pass?'pass':'fail'}">
       <div class="cbody">
-        <div class="head">${pass?'✓ PASS':'✕ FAIL'} &mdash; 70% Rule</div>
-        <div class="subh">${pass?'Deal clears the 70% screen.':'Deal does not clear the 70% screen as a flip.'}</div>
+        <div class="head">${pass?'✓ PASS':'✕ FAIL'} &mdash; ${ltvPct}% Rule</div>
+        <div class="subh">${pass?`Deal clears the ${ltvPct}% screen.`:`Deal does not clear the ${ltvPct}% screen as a flip.`}</div>
         ${ruleBody}
       </div>
       <div class="cashout">
         <div class="k">Cash-Out Refinance Spread</div>
         <div class="v ${cashOutSpread>=0?'pos':'neg'}">${money(cashOutSpread)}</div>
-        <div class="sub">${cashOutSpread>=0?'Pulled out over your all-in on a 70% LTV refi':'Short of recouping your all-in at 70% LTV'}</div>
+        <div class="sub">${cashOutSpread>=0?`Pulled out over your all-in on a ${ltvPct}% LTV refi`:`Short of recouping your all-in at ${ltvPct}% LTV`}</div>
       </div>
     </div>
 
@@ -853,7 +859,7 @@ function render(){
 window.generateReport = function(){ render(); };
 
 // live binding — purchase, rehab AND mortgage inputs all recompute the whole report on every keystroke
-['address','purchase_price','rehab_budget','down_pct','interest_rate','loan_term','market_appr','baseline_appr'].forEach(id => $(id).addEventListener('input', render));
+['address','purchase_price','rehab_budget','down_pct','interest_rate','loan_term','market_appr','baseline_appr','ltv_pct'].forEach(id => $(id).addEventListener('input', render));
 
 // init
 render();
