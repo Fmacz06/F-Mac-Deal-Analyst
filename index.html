@@ -123,14 +123,23 @@
   .rb{background:#f6f8fb;border:1px solid #e3e9f1;border-radius:8px;padding:12px;text-align:center;}
   .rb .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;}
   .rb .v{font-size:20px;font-weight:800;color:var(--navy);margin-top:4px;}
-  .callout{border-radius:10px;padding:14px 18px;}
+  .callout{border-radius:10px;padding:14px 18px;display:flex;gap:16px;align-items:stretch;}
   .callout.fail{background:var(--red-card);border:1px solid var(--red-bd);}
   .callout.pass{background:var(--green-card);border:1px solid var(--green-bd);}
+  .callout .cbody{flex:1 1 auto;min-width:0;}
   .callout .head{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800;}
   .callout.fail .head{color:var(--red-ink);}
   .callout.pass .head{color:var(--green-ink);}
   .callout .subh{font-size:13px;margin:4px 0 8px;color:#444;}
   .callout ul{margin:6px 0 0;padding-left:20px;font-size:13px;line-height:1.55;}
+  .cashout{flex:0 0 220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#fff;border-radius:10px;padding:14px 12px;}
+  .callout.pass .cashout{border:1px solid var(--green-bd);}
+  .callout.fail .cashout{border:1px solid var(--red-bd);}
+  .cashout .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;line-height:1.3;}
+  .cashout .v{font-size:26px;font-weight:800;margin-top:6px;}
+  .cashout .v.pos{color:var(--green-ink);}
+  .cashout .v.neg{color:var(--red-ink);}
+  .cashout .sub{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.3;}
   .notes{background:var(--amber-card);border:1px solid var(--amber-bd);border-radius:10px;padding:16px 20px;}
   .notes ul{margin:0;padding-left:20px;font-size:13px;line-height:1.65;}
   .notes li{margin-bottom:5px;}
@@ -515,6 +524,7 @@ function render(){
   const maxAllowed = arv70;               // max TOTAL investment (purchase + rehab) you can recoup
   const maxPurchase = arv70 - rehab;      // implied max purchase price after rehab
   const pass = total>0 && total <= maxAllowed;
+  const cashOutSpread = maxAllowed - total;   // BRRRR: 70% ceiling minus all-in; positive = cash left over after recouping investment
 
   let seal = SEALS.yellow;
   if(pass && spread >= 50000) seal = SEALS.green;
@@ -798,9 +808,16 @@ function render(){
       <div class="rb"><div class="k">Purchase + Rehab</div><div class="v">${money(purchase)} + ${money(rehab)}</div></div>
     </div>
     <div class="callout ${pass?'pass':'fail'}">
-      <div class="head">${pass?'✓ PASS':'✕ FAIL'} &mdash; 70% Rule</div>
-      <div class="subh">${pass?'Deal clears the 70% screen.':'Deal does not clear the 70% screen as a flip.'}</div>
-      ${ruleBody}
+      <div class="cbody">
+        <div class="head">${pass?'✓ PASS':'✕ FAIL'} &mdash; 70% Rule</div>
+        <div class="subh">${pass?'Deal clears the 70% screen.':'Deal does not clear the 70% screen as a flip.'}</div>
+        ${ruleBody}
+      </div>
+      <div class="cashout">
+        <div class="k">Cash-Out Refinance Spread</div>
+        <div class="v ${cashOutSpread>=0?'pos':'neg'}">${money(cashOutSpread)}</div>
+        <div class="sub">${cashOutSpread>=0?'Pulled out over your all-in on a 70% LTV refi':'Short of recouping your all-in at 70% LTV'}</div>
+      </div>
     </div>
 
     <h2>Data Quality &amp; Market Notes</h2>
