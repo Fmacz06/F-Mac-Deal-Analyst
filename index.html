@@ -23,6 +23,9 @@
   .app{display:grid;grid-template-columns:430px 1fr;min-height:100vh;}
   .panel{background:#fff;border-right:1px solid #dfe5ee;padding:18px 20px 60px;overflow-y:auto;height:100vh;position:sticky;top:0;}
   .preview{padding:0;overflow-y:auto;height:100vh;}
+  /* Report-only view (shared link ?report) — hide the input panel, report fills the width */
+  body.reportonly .panel{display:none !important;}
+  body.reportonly .app{grid-template-columns:1fr;}
   .panel h1{font-size:18px;margin:0 0 2px;}
   .panel .tag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;}
   .panel .grp{margin-top:16px;border-top:1px solid #eef1f5;padding-top:14px;}
@@ -358,6 +361,9 @@ function isNightTime(){ const h = new Date().getHours(); return h >= 19 || h < 5
 function autoNight(){ applyNight(isNightTime()); }          // follow the clock
 function toggleNight(){ applyNight(!document.body.classList.contains('night')); } // manual flip (auto re-checks each minute)
 document.addEventListener('DOMContentLoaded', ()=>{ autoNight(); setInterval(autoNight, 60000); });
+
+// ---- Report-only view: add ?report (or #report) to the URL to hide the input panel and show just the report ----
+(function(){ const s=(location.search+location.hash).toLowerCase(); if(s.indexOf('report')>-1){ document.body.classList.add('reportonly'); } })();
 
 // ---- Save / Print PDF (right-side report only, full color, white) ----
 // Filename defaults to "<street address> Analyst" — browsers use document.title for the Save-as-PDF name.
