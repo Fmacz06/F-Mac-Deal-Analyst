@@ -318,7 +318,27 @@
     </div>
 
     <div class="sow-entry">
-      <input id="sowCat" type="text" placeholder="Category (e.g. Electrical)">
+      <input id="sowCat" type="text" list="sowCatList" placeholder="Category (select or type)">
+      <datalist id="sowCatList">
+        <option value="Flooring"></option>
+        <option value="Kitchen"></option>
+        <option value="Cabinets"></option>
+        <option value="Countertops"></option>
+        <option value="Exterior Paint"></option>
+        <option value="Interior Paint"></option>
+        <option value="Roof"></option>
+        <option value="HVAC"></option>
+        <option value="Electrical"></option>
+        <option value="Plumbing"></option>
+        <option value="Windows"></option>
+        <option value="Doors"></option>
+        <option value="Bathrooms"></option>
+        <option value="Drywall"></option>
+        <option value="Landscaping"></option>
+        <option value="Foundation"></option>
+        <option value="Appliances"></option>
+        <option value="Permits"></option>
+      </datalist>
       <input id="sowAmt" type="number" placeholder="Amount ($)">
       <button class="btn btn-primary" onclick="addSowItem()">+ Add Item</button>
     </div>
