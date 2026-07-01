@@ -541,8 +541,8 @@ function render(){
         : financed / nPmts)
     : 0;
   const monthlyPIr = Math.round(monthlyPI);
-  // Insurance rule of thumb: $100/mo per $100,000 of insured value (= purchase/1000).
-  const monthlyInsurance = Math.round(purchase / 1000);
+  // Insurance rule of thumb: $100/mo per $100,000 of insured value. Insured value = total project cost.
+  const monthlyInsurance = Math.round(financeBase / 1000);
   // Property tax — pulled from county PAYMENT INFO (annual), divided by 12. Null until verified.
   const annualTax = (DEAL.annual_tax != null && DEAL.annual_tax !== '') ? +DEAL.annual_tax : null;
   const monthlyTax = (annualTax != null) ? Math.round(annualTax / 12) : null;
