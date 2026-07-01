@@ -236,6 +236,30 @@
     h2{break-after:avoid;}
     .cards,.rule3,table{break-inside:avoid;}
   }
+
+  /* ---------- Phone / small screens (desktop layout untouched above this) ---------- */
+  @media (max-width:768px){
+    .app{display:block;}                              /* stack instead of side-by-side */
+    .panel{position:static;height:auto;width:100%;border-right:none;border-bottom:1px solid #dfe5ee;}
+    .preview{height:auto;overflow:visible;}
+    .page{max-width:100%;margin:0;box-shadow:none;}
+    /* Collapse the 4-across / 3-across grids so text stays readable */
+    .stats{grid-template-columns:1fr 1fr;}
+    .subj{grid-template-columns:1fr 1fr;}
+    .cards{grid-template-columns:1fr;}
+    .rule3{grid-template-columns:1fr;}
+    .srcgrid{grid-template-columns:1fr 1fr;}
+    .callout{flex-direction:column;align-items:stretch;}
+    .cashout{flex:1 1 auto;}
+    /* Let wide tables scroll sideways rather than crushing columns */
+    .comphdr,.comprow{font-size:8.5px;}
+    table{display:block;overflow-x:auto;}
+  }
+  @media (max-width:440px){
+    .stats{grid-template-columns:1fr;}
+    .subj{grid-template-columns:1fr;}
+    .srcgrid{grid-template-columns:1fr;}
+  }
 </style>
 <!-- Color-accurate PDF export (rasterizes the live report exactly as seen on screen) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
