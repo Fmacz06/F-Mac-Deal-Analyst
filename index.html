@@ -512,8 +512,9 @@ function render(){
   const total = purchase + rehab;
   const spread = projArv - total;
   const arv70 = projArv * 0.70;
-  const maxAllowed = arv70 - rehab;
-  const pass = purchase>0 && purchase <= maxAllowed;
+  const maxAllowed = arv70;               // max TOTAL investment (purchase + rehab) you can recoup
+  const maxPurchase = arv70 - rehab;      // implied max purchase price after rehab
+  const pass = total>0 && total <= maxAllowed;
 
   let seal = SEALS.yellow;
   if(pass && spread >= 50000) seal = SEALS.green;
@@ -651,16 +652,15 @@ function render(){
 
   let ruleBody;
   if(pass){
-    ruleBody = `<ul><li>Purchase of ${money(purchase)} is at or under the ${money(maxAllowed)} max allowed.</li>
-      <li>Built-in equity / spread of <strong>${money(spread)}</strong> at projected ARV.</li></ul>`;
+    ruleBody = `<ul><li>Total investment of ${money(total)} (purchase ${money(purchase)} + rehab ${money(rehab)}) is at or under the ${money(maxAllowed)} max allowed.</li>
+      <li>Built-in equity / spread of <strong>${money(spread)}</strong> at projected ARV &mdash; recoup full investment on a BRRRR refi.</li></ul>`;
   } else {
-    const gap = purchase - maxAllowed;
-    const arvNeeded = round1k((purchase + rehab)/0.70);
-    const rehabMax = arv70 - purchase;
+    const gap = total - maxAllowed;
+    const arvNeeded = round1k(total/0.70);
     ruleBody = `<ul>
-      <li>Purchase exceeds max allowed by <strong>${money(gap)}</strong>.</li>
-      <li>To pass at this ARV/rehab, buy at or under <strong>${money(maxAllowed)}</strong>.</li>
-      <li>Or hold rehab to <strong>${money(rehabMax)}</strong>, or get ARV up to <strong>${money(arvNeeded)}</strong>.</li>
+      <li>Total investment exceeds max allowed by <strong>${money(gap)}</strong>.</li>
+      <li>To pass at this ARV, keep total (purchase + rehab) at or under <strong>${money(maxAllowed)}</strong> &mdash; i.e. buy at or under <strong>${money(maxPurchase)}</strong>.</li>
+      <li>Or get ARV up to <strong>${money(arvNeeded)}</strong>.</li>
     </ul>`;
   }
 
@@ -793,9 +793,9 @@ function render(){
 
     <h2>70% Rule Check</h2>
     <div class="rule3">
-      <div class="rb"><div class="k">ARV &times; 70%</div><div class="v">${money(arv70)}</div></div>
-      <div class="rb"><div class="k">Max Allowed Purchase</div><div class="v">${money(maxAllowed)}</div></div>
-      <div class="rb"><div class="k">Your Purchase</div><div class="v">${money(purchase)}</div></div>
+      <div class="rb"><div class="k">ARV &times; 70% (Max Investment)</div><div class="v">${money(maxAllowed)}</div></div>
+      <div class="rb"><div class="k">Your Total Investment</div><div class="v">${money(total)}</div></div>
+      <div class="rb"><div class="k">Purchase + Rehab</div><div class="v">${money(purchase)} + ${money(rehab)}</div></div>
     </div>
     <div class="callout ${pass?'pass':'fail'}">
       <div class="head">${pass?'✓ PASS':'✕ FAIL'} &mdash; 70% Rule</div>
