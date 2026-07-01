@@ -529,8 +529,10 @@ function render(){
   const downPct = !isNaN(downIn) ? downIn/100 : (DEAL.down_pct != null ? +DEAL.down_pct : 0.20);
   const annRate = !isNaN(rateIn) ? rateIn/100 : (DEAL.interest_rate != null ? +DEAL.interest_rate : 0.07);
   const termYrs = !isNaN(termIn) ? termIn : (DEAL.loan_term_years != null ? +DEAL.loan_term_years : 30);
-  const downAmt = Math.round(purchase * downPct);
-  const financed = purchase - downAmt;
+  // Financing is on the TOTAL project cost (purchase + rehab), not purchase alone.
+  const financeBase = total; // purchase + rehab
+  const downAmt = Math.round(financeBase * downPct);
+  const financed = financeBase - downAmt;
   const mRate = annRate / 12;
   const nPmts = termYrs * 12;
   const monthlyPI = (financed > 0)
@@ -643,7 +645,7 @@ function render(){
         <tbody>
           <tr class="comp-note">
             <td>${dash(address)}</td>
-            <td>${money(purchase)}</td>
+            <td>${money(financeBase)}</td>
             <td>${money(downAmt)}</td>
             <td>${money(financed)}</td>
             <td>${(annRate*100).toFixed(annRate*100%1?2:0)}%</td>
