@@ -229,9 +229,9 @@
       <div class="gt">Appreciation Inputs</div>
       <label>Market / Area Appreciation (%/yr)</label>
       <input id="market_appr" type="number" step="0.1" placeholder="4">
-      <label>Fixed Baseline (%/yr)</label>
-      <input id="baseline_appr" type="number" step="0.1" placeholder="4">
-      <p class="hint">The 10-Year Appreciation Chart blends three signals equally: this property's own history (last sale &rarr; ARV), the market/area rate, and this fixed baseline. Defaults 4% each. Edit and hit Generate Report.</p>
+      <label>Inflation Baseline (%/yr)</label>
+      <input id="baseline_appr" type="number" step="0.1" placeholder="3">
+      <p class="hint">The 10-Year Appreciation Chart blends three signals by weight &mdash; market/area 50%, inflation baseline 30%, this property's own history (last sale &rarr; ARV) 20%. Defaults: market 4%, inflation 3%. Edit and hit Generate Report.</p>
     </div>
 
     <div class="grp">
@@ -566,7 +566,7 @@ function render(){
   const marketApprIn = parseFloat($('market_appr').value);
   const baselineIn   = parseFloat($('baseline_appr').value);
   const marketAppr   = !isNaN(marketApprIn) ? marketApprIn/100 : (DEAL.market_appr_rate!=null ? +DEAL.market_appr_rate : 0.04);
-  const baselineAppr = !isNaN(baselineIn)   ? baselineIn/100   : (DEAL.baseline_appr_rate!=null ? +DEAL.baseline_appr_rate : 0.04);
+  const baselineAppr = !isNaN(baselineIn)   ? baselineIn/100   : (DEAL.baseline_appr_rate!=null ? +DEAL.baseline_appr_rate : 0.03);
   // Property's own history: annualized rate from last recorded sale → today's ARV.
   const nowYear = new Date().getFullYear();
   const lastSaleP = parseFloat(DEAL.last_sale_price)||0;
@@ -576,10 +576,12 @@ function render(){
     histYears = nowYear - lastSaleY;
     histAppr = Math.pow(projArv/lastSaleP, 1/histYears) - 1;
   }
-  // Equal blend across whichever signals exist (history may be missing).
-  const apprSignals = [marketAppr, baselineAppr];
-  if(histAppr!=null) apprSignals.unshift(histAppr);
-  const blendedAppr = apprSignals.reduce((a,b)=>a+b,0)/apprSignals.length;
+  // Weighted blend: market 50%, baseline (inflation) 30%, single-property history 20%.
+  // Market is the most reliable signal; one property's history is thin/noisy, so it counts least.
+  // If history is missing, its weight is dropped and the rest renormalized.
+  const wMarket=0.50, wBase=0.30, wHist=0.20;
+  const wSum = wMarket + wBase + (histAppr!=null ? wHist : 0);
+  const blendedAppr = ((histAppr!=null ? histAppr*wHist : 0) + marketAppr*wMarket + baselineAppr*wBase) / wSum;
   // Projection from today's ARV forward.
   const val5  = Math.round(projArv * Math.pow(1+blendedAppr, 5));
   const val10 = Math.round(projArv * Math.pow(1+blendedAppr, 10));
@@ -592,7 +594,7 @@ function render(){
 
   // Build inline SVG line chart (self-contained so it rasterizes into the PDF export).
   const apprChartSvg = (() => {
-    const W=660, H=340, padL=70, padR=30, padT=24, padB=40;
+    const W=462, H=238, padL=52, padR=22, padT=18, padB=30;
     const plotW=W-padL-padR, plotH=H-padT-padB;
     const yrs = apprPts.map(p=>p.year), vals = apprPts.map(p=>p.val);
     const minY=Math.min(...yrs), maxY=Math.max(...yrs);
@@ -604,25 +606,25 @@ function render(){
     let grid='', ny=4;
     for(let i=0;i<=ny;i++){ const gv=maxV*i/ny, gy=Y(gv);
       grid+=`<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${W-padR}" y2="${gy.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`
-          + `<text x="${padL-8}" y="${(gy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#5e6a82">${fmtK(gv)}</text>`; }
+          + `<text x="${padL-6}" y="${(gy+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#5e6a82">${fmtK(gv)}</text>`; }
     // x ticks
-    let xt=''; apprPts.forEach(p=>{ xt+=`<text x="${X(p.year).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" font-size="11" fill="#5e6a82">${p.year}</text>`; });
+    let xt=''; apprPts.forEach(p=>{ xt+=`<text x="${X(p.year).toFixed(1)}" y="${H-padB+14}" text-anchor="middle" font-size="9" fill="#5e6a82">${p.year}</text>`; });
     // split solid (hist→today) vs dashed (today→proj)
     const todayIdx = apprPts.findIndex(p=>p.kind==='today');
     const solidPts = apprPts.slice(0, todayIdx+1);
     const projPts  = apprPts.slice(todayIdx);
     const path = pts => pts.map((p,i)=>`${i?'L':'M'}${X(p.year).toFixed(1)},${Y(p.val).toFixed(1)}`).join(' ');
-    const solidLine = solidPts.length>1 ? `<path d="${path(solidPts)}" fill="none" stroke="#2f6f9f" stroke-width="3.5"/>` : '';
-    const projLine  = `<path d="${path(projPts)}" fill="none" stroke="#e07b39" stroke-width="3.5" stroke-dasharray="7 5"/>`;
+    const solidLine = solidPts.length>1 ? `<path d="${path(solidPts)}" fill="none" stroke="#2f6f9f" stroke-width="2.5"/>` : '';
+    const projLine  = `<path d="${path(projPts)}" fill="none" stroke="#e07b39" stroke-width="2.5" stroke-dasharray="6 4"/>`;
     // dots + callouts
     let dots='';
     apprPts.forEach(p=>{ const c=p.kind==='proj'?'#e07b39':(p.kind==='today'?'#1f2d4d':'#2f6f9f');
-      dots+=`<circle cx="${X(p.year).toFixed(1)}" cy="${Y(p.val).toFixed(1)}" r="4.5" fill="${c}"/>`; });
+      dots+=`<circle cx="${X(p.year).toFixed(1)}" cy="${Y(p.val).toFixed(1)}" r="3.5" fill="${c}"/>`; });
     // value labels on today / +5 / +10
     let labels='';
     [todayIdx, apprPts.length-2, apprPts.length-1].forEach(i=>{ const p=apprPts[i]; if(!p) return;
       const c=p.kind==='proj'?'#e07b39':'#1f2d4d';
-      labels+=`<text x="${X(p.year).toFixed(1)}" y="${(Y(p.val)-12).toFixed(1)}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${c}">${money(p.val)}</text>`; });
+      labels+=`<text x="${X(p.year).toFixed(1)}" y="${(Y(p.val)-9).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${c}">${money(p.val)}</text>`; });
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;margin:0 auto;font-family:inherit;">`
       + grid + xt
       + `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#94a3b8" stroke-width="1.5"/>`
@@ -801,6 +803,12 @@ function render(){
       ${ruleBody}
     </div>
 
+    <h2>Data Quality &amp; Market Notes</h2>
+    <div class="notes">
+      <ul>${notesHtml}</ul>
+      <div class="sources">${dash(DEAL.sources_line)}</div>
+    </div>
+
     <h2>10-Year Appreciation Chart</h2>
     <div class="rentalbox">
       <div class="rentalhead">
@@ -813,13 +821,7 @@ function render(){
         <div class="rb"><div class="k">Value in 5 yr</div><div class="v">${money(val5)}</div></div>
         <div class="rb"><div class="k">Value in 10 yr</div><div class="v">${money(val10)}</div></div>
       </div>
-      <p class="srcnote" style="margin-top:10px;">Blend (equal 1/3 each): ${histAppr!=null?`property history ${(histAppr*100).toFixed(1)}%/yr (${money(lastSaleP)} in ${lastSaleY} &rarr; ARV over ${histYears} yr)`:'property history n/a'}, market/area ${(marketAppr*100).toFixed(1)}%/yr, fixed baseline ${(baselineAppr*100).toFixed(1)}%/yr. Solid line = actual to today; dashed = projection.</p>
-    </div>
-
-    <h2>Data Quality &amp; Market Notes</h2>
-    <div class="notes">
-      <ul>${notesHtml}</ul>
-      <div class="sources">${dash(DEAL.sources_line)}</div>
+      <p class="srcnote" style="margin-top:10px;">Weighted blend &mdash; market/area 50% (${(marketAppr*100).toFixed(1)}%/yr), inflation baseline 30% (${(baselineAppr*100).toFixed(1)}%/yr), ${histAppr!=null?`property history 20% (${(histAppr*100).toFixed(1)}%/yr: ${money(lastSaleP)} in ${lastSaleY} &rarr; ARV over ${histYears} yr)`:'property history n/a (weight redistributed)'}. Inflation is baked into the baseline. Solid line = actual to today; dashed = projection.</p>
     </div>
 
     <div class="disclaimer">
