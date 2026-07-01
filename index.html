@@ -594,7 +594,7 @@ function render(){
 
   // Build inline SVG line chart (self-contained so it rasterizes into the PDF export).
   const apprChartSvg = (() => {
-    const W=462, H=238, padL=52, padR=22, padT=18, padB=30;
+    const W=680, H=238, padL=52, padR=22, padT=18, padB=30;
     const plotW=W-padL-padR, plotH=H-padT-padB;
     const yrs = apprPts.map(p=>p.year), vals = apprPts.map(p=>p.val);
     const minY=Math.min(...yrs), maxY=Math.max(...yrs);
