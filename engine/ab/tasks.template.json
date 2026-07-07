@@ -1,0 +1,12 @@
+[
+  {"id": "t01", "type": "code-review", "prompt": "PASTE a real code-review task from your backlog"},
+  {"id": "t02", "type": "code-review", "prompt": "..."},
+  {"id": "t03", "type": "code-review", "prompt": "..."},
+  {"id": "t04", "type": "code-review", "prompt": "..."},
+  {"id": "t05", "type": "architecture", "prompt": "..."},
+  {"id": "t06", "type": "architecture", "prompt": "..."},
+  {"id": "t07", "type": "architecture", "prompt": "..."},
+  {"id": "t08", "type": "implementation-approach", "prompt": "..."},
+  {"id": "t09", "type": "implementation-approach", "prompt": "..."},
+  {"id": "t10", "type": "implementation-approach", "prompt": "..."}
+]
