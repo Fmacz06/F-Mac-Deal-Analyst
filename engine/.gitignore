@@ -1,7 +1,9 @@
 # local artifacts — never commit training data, corpus, or adapters
 .venv/
 __pycache__/
-corpus/
+# the bin: contents stay local/private; only the instructions are committed
+corpus/*
+!corpus/README.md
 data*/
 adapters/
 smoke/
