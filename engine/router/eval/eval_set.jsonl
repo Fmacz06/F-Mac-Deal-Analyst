@@ -1,0 +1,51 @@
+{"prompt": "Review this diff before I merge:\n```python\ndef retry(fn, n=3):\n    for _ in range(n):\n        try: return fn()\n        except Exception: pass\n```", "expected": "coding"}
+{"prompt": "Getting Traceback (most recent call last) KeyError: 'user_id' when the webhook fires twice — where do I start?", "expected": "coding"}
+{"prompt": "Should utils.py own the date parsing or does that belong in models.py? Feels like a layering smell.", "expected": "coding"}
+{"prompt": "Write a unit test first for the rent-roll importer, then the implementation.", "expected": "coding"}
+{"prompt": "The linter flags this as a type error but it runs fine — is the annotation wrong or the config?", "expected": "coding"}
+{"prompt": "Plan the refactor of the deal analyzer's scope-of-work module — what's the safest sequencing?", "expected": "coding"}
+{"prompt": "Why would this merge conflict keep reappearing after I rebase?", "expected": "coding"}
+{"prompt": "Code review: is swallowing the exception in this retry loop acceptable?\n```js\ntry { save() } catch (e) {}\n```", "expected": "coding"}
+{"prompt": "My API endpoint returns 500 only under load — how do I reproduce it in a test?", "expected": "coding"}
+{"prompt": "Sketch the architecture for a queue worker that must never double-process a job. Include the test plan.", "expected": "coding"}
+{"prompt": "index.html is 90KB in one file — how would you split it without breaking the report view?", "expected": "coding"}
+{"prompt": "What's the regression risk if I bump the schema version in migrations.sql without a backfill?", "expected": "coding"}
+{"prompt": "Help me think through whether money-as-composite-time changes how I should price my own hours.", "expected": "reasoning"}
+{"prompt": "What if the eschatology chapter opens with the objection instead of the thesis — does the argument still land?", "expected": "reasoning"}
+{"prompt": "Walk me through the logic of taking the bigger warehouse now versus waiting a year.", "expected": "reasoning"}
+{"prompt": "Help me think through the trade-offs of hiring a second tech versus subcontracting overflow.", "expected": "reasoning"}
+{"prompt": "Is it wise to anchor the book's first principles in the doctrine section, or does that narrow the audience?", "expected": "reasoning"}
+{"prompt": "What are the implications of framing security as faith-rooted rather than asset-rooted in chapter 3?", "expected": "reasoning"}
+{"prompt": "Help me think through whether this partnership dilutes the conviction the brand is built on.", "expected": "reasoning"}
+{"prompt": "Build me a framework for deciding which deals deserve a site visit versus a desktop pass.", "expected": "reasoning"}
+{"prompt": "What if we tithe on gross instead of net during the expansion year — think it through with me.", "expected": "reasoning"}
+{"prompt": "The thesis feels weak: 'ownership beats access.' Pressure-test the argument structure.", "expected": "reasoning"}
+{"prompt": "Should I keep the scripture citations inline or move them to endnotes? Think through reader impact.", "expected": "reasoning"}
+{"prompt": "Draft the storyboard for the 60-second brand intro — open on the shop floor, end on the logo.", "expected": "video"}
+{"prompt": "Write the render spec: 4K master, 24 frame rate, log color grade, delivery in ProRes.", "expected": "video"}
+{"prompt": "What b-roll do we need for the property walkthrough video brief?", "expected": "video"}
+{"prompt": "The edit timeline drags in the middle third — restructure the scene list.", "expected": "video"}
+{"prompt": "Thumbnail options for the BRRRR explainer — what reads at small size?", "expected": "video"}
+{"prompt": "Turn this outline into a video brief the editor can shoot from without me on set.", "expected": "video"}
+{"prompt": "Aspect ratio strategy: master in 16:9 but the clips run 9:16 — how do we frame for both?", "expected": "video"}
+{"prompt": "Give the colorist notes: the footage is flat log, I want the warehouse warm but the sky honest.", "expected": "video"}
+{"prompt": "What tolerance should the snap-fit lid have for a 3D print in PLA at 0.2mm layers?", "expected": "design"}
+{"prompt": "The bracket sketch needs a clearance fit on the 8mm shaft — loose or transition?", "expected": "design"}
+{"prompt": "Fillet or chamfer on the load-bearing corner before I export the STL?", "expected": "design"}
+{"prompt": "Dimensioning question: datum off the mounting face or the bore centerline?", "expected": "design"}
+{"prompt": "This part warps when 3d printed flat — reorient or redesign the ribs?", "expected": "design"}
+{"prompt": "Convert my napkin sketch constraints into a parametric CAD feature plan.", "expected": "design"}
+{"prompt": "Injection molding later, printing now: what draft angles should I bake in today?", "expected": "design"}
+{"prompt": "The assembly fit binds at temperature — how much clearance for aluminum on steel?", "expected": "design"}
+{"prompt": "STEP file or STL for the machine shop, and what tolerances do I call out on the drawing?", "expected": "design"}
+{"prompt": "Manufacturing check: can this wall thickness survive the tolerance stack across three mating parts?", "expected": "design"}
+{"prompt": "What's a good gift for my brother's birthday?", "expected": "claude"}
+{"prompt": "Summarize what happened in the markets today.", "expected": "claude"}
+{"prompt": "Translate this paragraph into Spanish for the tenant notice.", "expected": "claude"}
+{"prompt": "Draft a polite reply declining the conference invitation.", "expected": "claude"}
+{"prompt": "What's the weather pattern for Houston this week?", "expected": "claude"}
+{"prompt": "Make this email to the county assessor sound firmer without being rude.", "expected": "claude"}
+{"prompt": "Plan a 3-day trip itinerary for the family reunion.", "expected": "claude"}
+{"prompt": "hmm", "expected": "claude"}
+{"prompt": "What about the thing from earlier?", "expected": "claude"}
+{"prompt": "Give me a recipe that uses brisket leftovers.", "expected": "claude"}

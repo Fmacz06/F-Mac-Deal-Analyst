@@ -1,0 +1,13 @@
+# local artifacts — never commit training data, corpus, or adapters
+.venv/
+__pycache__/
+corpus/
+data*/
+adapters/
+smoke/
+ab/runs/
+ab/tasks.json
+inventory.md
+probes-*.md
+*-log.jsonl
+routing-log.jsonl
