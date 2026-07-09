@@ -152,7 +152,7 @@ Capacity: 7B–14B LoRA easy (20–40 min); 32B QLoRA comfortable; 70B QLoRA pos
 ### Phase 3 — First LoRA training run
 **Objective:** trained coding adapter.
 **Run:** `mlx_lm.lora --model mlx-community/Qwen2.5-14B-Instruct-4bit --train --data ./data --iters 600` (venv from Phase 0). Expected 20–40 min. Watch validation loss: still falling at 600 iters → one continuation run; flat/rising while train loss falls → overfitting, stop earlier. OOM → `--batch-size 1`, then fewer `--num-layers`, in that order. Log every run's config + final losses in `PROGRESS.md` (runs are cheap; keep each adapter output separately — never overwrite a previous adapter).
-**Gates:** ✅ run completes · ✅ validation loss improved vs start · ✅ adapter saved + config logged · ✅ 3 manual probe prompts show methodology voice (test-first instinct, Clear/Fuzzy/Missing framing) vs base model.
+**Gates:** ✅ run completes · ✅ validation loss improved vs start · ✅ adapter saved + config logged · ✅ 3 manual probe prompts show methodology voice (test-first instinct, Clear/Fuzzy/Missing framing) vs base model — at least 1 probe OFF-corpus (general-competence check, §8).
 **F Mac touchpoint:** none (show him the probe outputs for flavor, not approval).
 
 ### Phase 4 — Serve + A/B test
@@ -165,7 +165,7 @@ Capacity: 7B–14B LoRA easy (20–40 min); 32B QLoRA comfortable; 70B QLoRA pos
 ### Phase 5 — DECISION GATE
 **Objective:** GO / DIAGNOSE / ESCALATE, with evidence.
 - **GO** (specialist ≥ 3.5 avg on methodology fidelity AND ≥ 3 on correctness): proceed to Phase 6.
-- **DIAGNOSE** (thin on fidelity): dataset problem — identify which task types failed, map to corpus gaps, expand/clean corpus, re-run Phase 3 (cheap). Do NOT change base model to fix a dataset problem.
+- **DIAGNOSE** (thin on fidelity): dataset problem — identify which task types failed, map to corpus gaps, expand/clean corpus, loop Phases 2→4 on the fix (re-convert, re-train — cheap — re-A/B). Do NOT change base model to fix a dataset problem.
 - **ESCALATE** (fidelity fine, raw code quality thin): re-run same dataset on `Qwen2.5-Coder-14B-Instruct-4bit` (Correction 2) and re-A/B.
 **Output:** a one-page report — what held, what was thin, what changed, recommendation. `[Scoring thresholds are ASSUMED — F Mac sign-off §11]`
 **F Mac touchpoint:** the GO/no-go call.
@@ -182,7 +182,7 @@ Same playbook. Corpus = design notebooks/constraints/tolerances. **Known gap to 
 ### Phase 9 — Claude integration layer
 **Objective:** the full pattern live — local ideation/domain reasoning → structured output → Claude polish/expansion, mirroring the Threatic/Fable pattern.
 **Steps:** define the structured hand-up format (task type, specialist output, confidence, polish instructions); per-domain polish prompts; end-to-end smoke run on 5 real tasks; **F Mac full-system review** (Gate-6 style: works, gates passed, performance acceptable, clear to adopt).
-**Gates:** ✅ smoke run clean · ✅ F Mac sign-off. **System shipped.**
+**Gates:** ✅ smoke run clean · ✅ F Mac sign-off. On sign-off: final RUN REPORT written to `LESSONS.md` — product flaws, process flaws, and a PROTOCOL PATCH (what this blueprint should have said to get each phase right the first time). **System shipped.**
 
 ---
 

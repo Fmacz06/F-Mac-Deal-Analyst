@@ -33,7 +33,8 @@ none — if you claim one does, justify it). Then stop and wait for the Phase 0 
 ```
 Run Phase 0 of MASTER-BLUEPRINT.md (§6, Phase 0). Read §0, §2, and §12 first.
 
-Do: create PROGRESS.md, LESSONS.md, ENVIRONMENT.md in the project root. Set up a
+Do: PROGRESS.md, LESSONS.md, ENVIRONMENT.md already exist as scaffolds in the
+project root — fill them in, never recreate them from scratch. Set up a
 venv, install mlx-lm, pull mlx-community/Qwen2.5-14B-Instruct-4bit. Prove base
 inference. Build a 20-pair throwaway chat-format dataset (content irrelevant),
 run a 50-iter LoRA smoke train, prove the adapter loads and changes output, then
