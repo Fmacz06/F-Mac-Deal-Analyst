@@ -1,5 +1,29 @@
 # GETTING STARTED — your local LM, what it runs on, and what to download
 
+## ⚡ INTEL MAC? START HERE (the current path)
+
+The machine on hand is an Intel iMac, so the engine runs on **Ollama**
+(works on Intel) instead of MLX (Apple Silicon only). Training is deferred —
+this path gets a working local language model with F Mac's system prompts
+and parameters TODAY:
+
+```bash
+bash mac/intel-setup.sh
+```
+
+That installs Ollama, downloads an open-source Qwen2.5 base model sized to
+your RAM, and builds five custom local models: `fmac-base`, `fmac-coding`,
+`fmac-reasoning`, `fmac-video`, `fmac-design`. Talk to one directly:
+
+```bash
+ollama run fmac-coding
+```
+
+Everything below this section describes the original Apple-Silicon/MLX
+training path — it stays valid for the day the training hardware exists.
+
+---
+
 Plain-language companion to RUNBOOK.md. This is the "what am I actually
 installing" page.
 
