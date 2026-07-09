@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import time
 import urllib.error
@@ -27,15 +28,21 @@ from pathlib import Path
 
 ROUTES = ("coding", "reasoning", "video", "design", "claude")
 CONFIDENCE_FLOOR = 0.55
-LOCAL_ENDPOINT = "http://127.0.0.1:8080/v1/chat/completions"
+# Default: Ollama (Intel Mac path). Apple-Silicon MLX serving uses
+# LOCAL_LLM_ENDPOINT=http://127.0.0.1:8080/v1/chat/completions
+LOCAL_ENDPOINT = os.environ.get(
+    "LOCAL_LLM_ENDPOINT", "http://127.0.0.1:11434/v1/chat/completions")
+LOCAL_MODEL = os.environ.get("LOCAL_LLM_MODEL", "fmac-base")
 
-# Dispatch table: route -> adapter the server must be running (§3.3).
+# Dispatch table: route -> local model to use (§3.3). "model" names the
+# Ollama model (Intel path, built by mac/intel-setup.sh); "adapter" is the
+# future MLX adapter path (Apple Silicon path, after training).
 DISPATCH = {
-    "coding":    {"adapter": "adapters/coding",    "needs_polish_default": False},
-    "reasoning": {"adapter": "adapters/reasoning", "needs_polish_default": True},
-    "video":     {"adapter": "adapters/video",     "needs_polish_default": True},
-    "design":    {"adapter": "adapters/design",    "needs_polish_default": True},
-    "claude":    {"adapter": None,                 "needs_polish_default": False},
+    "coding":    {"model": "fmac-coding",    "adapter": "adapters/coding",    "needs_polish_default": False},
+    "reasoning": {"model": "fmac-reasoning", "adapter": "adapters/reasoning", "needs_polish_default": True},
+    "video":     {"model": "fmac-video",     "adapter": "adapters/video",     "needs_polish_default": True},
+    "design":    {"model": "fmac-design",    "adapter": "adapters/design",    "needs_polish_default": True},
+    "claude":    {"model": None,             "adapter": None,                 "needs_polish_default": False},
 }
 
 # ---- Layer 1: rules ------------------------------------------------------
@@ -111,6 +118,7 @@ def _llm_classify(text: str, endpoint: str, timeout: float = 20.0) -> str | None
     """One cheap classification call to the local base model. Returns a route
     name, 'general', or None on any failure (caller falls to Claude)."""
     body = json.dumps({
+        "model": LOCAL_MODEL,
         "messages": [{"role": "user",
                       "content": _CLASSIFY_PROMPT.format(task=text[:2000])}],
         "max_tokens": 8,

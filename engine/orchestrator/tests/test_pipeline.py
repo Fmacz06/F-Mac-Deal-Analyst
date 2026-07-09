@@ -13,6 +13,8 @@ from orchestrator import pipeline as P  # noqa: E402
 
 
 class StubSpecialist:
+    endpoint = "stub://local"
+
     def __init__(self):
         self.calls = []
 
@@ -94,7 +96,7 @@ class TestPipeline(unittest.TestCase):
         pipe, _ = make_pipeline()
         result = pipe.run("```py\nprint(1)\n```")
         h = result["handup"]
-        self.assertIn("Qwen2.5-14B", h["model_info"]["base"])
+        self.assertEqual(h["model_info"]["model"], "fmac-coding")
         self.assertEqual(h["timing"]["latency_ms"], 12.0)
 
     def test_all_polish_prompts_exist_and_nonempty(self):

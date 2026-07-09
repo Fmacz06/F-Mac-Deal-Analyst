@@ -54,6 +54,7 @@ class LocalSpecialist:
     def complete(self, route: str, prompt: str, max_tokens: int = 2048,
                  timeout: float = 300.0) -> dict:
         body = json.dumps({
+            "model": DISPATCH[route]["model"],
             "messages": [
                 {"role": "system", "content": SPECIALIST_SYSTEM_PROMPTS[route]},
                 {"role": "user", "content": prompt},
@@ -143,8 +144,8 @@ class Pipeline:
             confidence=decision.confidence,
             needs_polish=needs_polish,
             polish_instructions=load_polish_prompt(decision.route) if needs_polish else "",
-            model_info={"base": "mlx-community/Qwen2.5-14B-Instruct-4bit",
-                        "adapter": DISPATCH[decision.route]["adapter"]},
+            model_info={"model": DISPATCH[decision.route]["model"],
+                        "endpoint": self.specialist.endpoint},
             timing={"latency_ms": result["latency_ms"], "tok_s": result["tok_s"]},
         )
         handup.validate()
