@@ -9,8 +9,13 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo "== [1/5] Ollama =="
+OLLAMA="ollama"
 if ! command -v ollama >/dev/null 2>&1; then
-  if command -v brew >/dev/null 2>&1; then
+  # the Mac app ships its own CLI inside the app bundle — use it directly
+  if [ -x "/Applications/Ollama.app/Contents/Resources/ollama" ]; then
+    OLLAMA="/Applications/Ollama.app/Contents/Resources/ollama"
+    echo "using CLI inside Ollama.app"
+  elif command -v brew >/dev/null 2>&1; then
     brew install ollama
   else
     echo "Ollama isn't installed and Homebrew isn't available."
@@ -20,13 +25,22 @@ if ! command -v ollama >/dev/null 2>&1; then
   fi
 fi
 
-# make sure the server is up
+# make sure the server is up — launching the app starts it
 if ! curl -s http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
-  echo "starting ollama server..."
-  (ollama serve >/tmp/ollama.log 2>&1 &)
-  sleep 5
+  echo "starting Ollama..."
+  if [ -d "/Applications/Ollama.app" ]; then
+    open -a Ollama
+    sleep 10
+  else
+    ("$OLLAMA" serve >/tmp/ollama.log 2>&1 &)
+    sleep 5
+  fi
 fi
-curl -s http://127.0.0.1:11434/api/tags >/dev/null || { echo "ollama server not responding"; exit 1; }
+for i in 1 2 3 4 5 6; do
+  curl -s http://127.0.0.1:11434/api/tags >/dev/null 2>&1 && break
+  sleep 5
+done
+curl -s http://127.0.0.1:11434/api/tags >/dev/null || { echo "ollama server not responding — open the Ollama app manually, then rerun"; exit 1; }
 
 echo "== [2/5] pick model size for this machine =="
 RAM_GB=$(( $(sysctl -n hw.memsize) / 1073741824 ))
@@ -38,7 +52,7 @@ fi
 echo "RAM: ${RAM_GB}GB -> base model: $BASE"
 
 echo "== [3/5] download the base model (one-time) =="
-ollama pull "$BASE"
+"$OLLAMA" pull "$BASE"
 
 echo "== [4/5] build F Mac's custom models =="
 mkdir -p /tmp/fmac-modelfiles
@@ -49,11 +63,11 @@ build_model () {
     echo "PARAMETER num_ctx 8192"
     echo "SYSTEM \"\"\"$(cat "$system_file")\"\"\""
   } > "/tmp/fmac-modelfiles/$name.Modelfile"
-  ollama create "$name" -f "/tmp/fmac-modelfiles/$name.Modelfile"
+  "$OLLAMA" create "$name" -f "/tmp/fmac-modelfiles/$name.Modelfile"
   echo "  created: $name"
 }
 echo "FROM $BASE" > /tmp/fmac-modelfiles/fmac-base.Modelfile
-ollama create fmac-base -f /tmp/fmac-modelfiles/fmac-base.Modelfile
+"$OLLAMA" create fmac-base -f /tmp/fmac-modelfiles/fmac-base.Modelfile
 echo "  created: fmac-base (router/general)"
 build_model fmac-coding    prompts/coding-system.txt
 build_model fmac-reasoning prompts/reasoning-system.txt
@@ -77,5 +91,5 @@ EOF
 
 echo ""
 echo "DONE. Your local language model is live."
-echo "Talk to it:            ollama run fmac-coding"
+echo "Talk to it:            $OLLAMA run fmac-coding"
 echo "Full pipeline:         python3 orchestrator/pipeline.py \"your task\" --no-polish"
