@@ -24,7 +24,7 @@ build () {
   local mf="/tmp/fmac-modelfiles/$name.Modelfile"
   {
     echo "FROM $BASE"
-    echo "PARAMETER num_ctx 16384"        # room for the framework + a long chat
+    echo "PARAMETER num_ctx 32768"        # big whiteboard: framework barely dents it (64GB RAM)
     printf 'SYSTEM """'
     cat "$FRAMEWORK"
     if [ -n "$specialty" ]; then
