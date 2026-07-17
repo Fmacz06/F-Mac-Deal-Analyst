@@ -6,9 +6,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-OLLAMA="ollama"
-command -v ollama >/dev/null 2>&1 || OLLAMA="/Applications/Ollama.app/Contents/Resources/ollama"
-[ -x "$OLLAMA" ] || { echo "Ollama not found — run mac/intel-setup.sh first"; exit 1; }
+if command -v ollama >/dev/null 2>&1; then
+  OLLAMA="ollama"
+elif [ -x "/Applications/Ollama.app/Contents/Resources/ollama" ]; then
+  OLLAMA="/Applications/Ollama.app/Contents/Resources/ollama"
+else
+  echo "Ollama not found — run mac/intel-setup.sh first"; exit 1
+fi
 
 RAM_GB=$(( $(sysctl -n hw.memsize) / 1073741824 ))
 if [ "$RAM_GB" -ge 14 ]; then BASE="qwen2.5:7b-instruct"; else BASE="qwen2.5:3b-instruct"; fi
